@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebSearch",
+      "WebFetch(domain:reference.garak.ai)",
+      "Bash(python -m venv .venv)",
+      "Bash(\".venv/Scripts/python.exe\" -m pip install --upgrade pip -q)",
+      "Bash(npm create *)",
+      "Bash(npm install *)",
+      "Bash(\".venv/Scripts/python.exe\" -m pip install --only-binary=:all: -r requirements.txt)",
+      "Bash(npm run *)"
+    ]
+  }
+}
