@@ -1,0 +1,177 @@
+"""In-memory registry that runs a Garak probe as a background subprocess and
+tracks its lifecycle so the API can report status and support real cancellation.
+
+Route handlers stay synchronous `def`s (FastAPI runs them in its threadpool);
+the actual subprocess is launched via `Popen` and watched by a dedicated
+background thread, so `POST /api/scan` can return a run_id immediately instead
+of blocking for the whole scan.
+
+Cancellation tree-kills the process (`taskkill /F /T`) rather than just
+terminating the direct child: Garak's own probe runner can spawn a
+`multiprocessing.Pool` of worker processes for probes/generators that support
+parallel attempts, and `Popen.terminate()` on Windows only signals the direct
+child, not its descendants.
+"""
+
+import subprocess
+import threading
+import time
+from dataclasses import dataclass, field
+from pathlib import Path
+
+from app.config import SCAN_TIMEOUT_SECONDS
+from app.schemas import JobStatus, ScanRequest, ScanResponse, ScanStatusResponse
+from app.services.garak_runner import build_garak_command, prepare_run_dir
+from app.services.report_parser import parse_report
+
+
+@dataclass
+class ScanJob:
+    run_id: str
+    process: subprocess.Popen
+    probe_id: str
+    garak_probe: str
+    target_url: str
+    report_path: Path
+    start_time: float
+    status: JobStatus = JobStatus.RUNNING
+    result: ScanResponse | None = None
+    end_time: float | None = None
+    lock: threading.Lock = field(default_factory=threading.Lock)
+
+
+_jobs: dict[str, ScanJob] = {}
+_jobs_lock = threading.Lock()
+
+
+def start_scan_job(scan_request: ScanRequest, probe_id: str, garak_probe: str) -> str:
+    run_id, run_dir, generator_config_path, report_prefix = prepare_run_dir(scan_request)
+    command = build_garak_command(generator_config_path, garak_probe, report_prefix)
+    report_path = Path(f"{report_prefix}.report.jsonl")
+
+    process = subprocess.Popen(
+        command,
+        cwd=run_dir,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        creationflags=subprocess.CREATE_NEW_PROCESS_GROUP,
+    )
+
+    job = ScanJob(
+        run_id=run_id,
+        process=process,
+        probe_id=probe_id,
+        garak_probe=garak_probe,
+        target_url=scan_request.target_url,
+        report_path=report_path,
+        start_time=time.monotonic(),
+    )
+    with _jobs_lock:
+        _jobs[run_id] = job
+
+    threading.Thread(target=_watch_job, args=(job,), daemon=True).start()
+    return run_id
+
+
+def get_job(run_id: str) -> ScanJob | None:
+    with _jobs_lock:
+        return _jobs.get(run_id)
+
+
+def cancel_job(run_id: str) -> ScanJob | None:
+    job = get_job(run_id)
+    if job is None:
+        return None
+
+    with job.lock:
+        if job.status != JobStatus.RUNNING:
+            return job  # already terminal: idempotent no-op
+        job.status = JobStatus.CANCELLED
+
+    _kill_process_tree(job.process.pid)
+    return job
+
+
+def to_status_response(job: ScanJob) -> ScanStatusResponse:
+    with job.lock:
+        end = job.end_time if job.end_time is not None else time.monotonic()
+        payload = {
+            "run_id": job.run_id,
+            "status": job.status,
+            "elapsed_seconds": round(end - job.start_time, 1),
+        }
+        if job.result is not None:
+            payload.update(job.result.model_dump())
+        return ScanStatusResponse(**payload)
+
+
+def _kill_process_tree(pid: int) -> None:
+    # /T walks the Windows parent-PID tree, which also reaches any
+    # multiprocessing.Pool worker processes garak may have spawned.
+    subprocess.run(
+        ["taskkill", "/F", "/T", "/PID", str(pid)],
+        capture_output=True,
+        text=True,
+    )  # ignore result: the process may have already exited on its own
+
+
+def _watch_job(job: ScanJob) -> None:
+    try:
+        stdout, stderr = job.process.communicate(timeout=SCAN_TIMEOUT_SECONDS)
+        returncode = job.process.returncode
+        timed_out = False
+    except subprocess.TimeoutExpired:
+        _kill_process_tree(job.process.pid)
+        stdout, stderr = job.process.communicate()  # drain buffered output after kill
+        returncode = -1
+        timed_out = True
+
+    with job.lock:
+        if job.status != JobStatus.RUNNING:
+            # Cancel endpoint already claimed this job; don't clobber its status.
+            if job.result is None:
+                job.result = _build_error_response(job, "Scan was cancelled.")
+                job.end_time = time.monotonic()
+            return
+
+        job.end_time = time.monotonic()
+        if timed_out:
+            job.status = JobStatus.TIMED_OUT
+            job.result = _build_error_response(
+                job, f"Scan exceeded the {SCAN_TIMEOUT_SECONDS}s timeout limit and was stopped automatically."
+            )
+        elif returncode == 0:
+            failures, summary, attempts_evaluated = parse_report(job.report_path)
+            job.status = JobStatus.COMPLETED
+            job.result = ScanResponse(
+                ok=True,
+                probe_id=job.probe_id,
+                garak_probe=job.garak_probe,
+                target_url=job.target_url,
+                attempts_evaluated=attempts_evaluated,
+                failure_count=len(failures),
+                failures=failures,
+                summary=summary,
+                error=None,
+            )
+        else:
+            job.status = JobStatus.FAILED
+            error_tail = (stderr or stdout or "").strip()[-2000:]
+            job.result = _build_error_response(job, error_tail or "Garak run failed with no output.")
+
+
+def _build_error_response(job: ScanJob, error: str) -> ScanResponse:
+    return ScanResponse(
+        ok=False,
+        probe_id=job.probe_id,
+        garak_probe=job.garak_probe,
+        target_url=job.target_url,
+        attempts_evaluated=0,
+        failure_count=0,
+        failures=[],
+        summary=[],
+        error=error,
+    )
