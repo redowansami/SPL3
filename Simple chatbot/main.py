@@ -5,7 +5,8 @@ import uvicorn
 
 app = FastAPI()
 
-MODEL = "smollm2:135m"
+# MODEL = "smollm2:135m"
+MODEL = "huihui_ai/qwen2.5-abliterate:1.5b"
 
 SYSTEM_PROMPT = (
     "You are a helpful assistant for Acme Corp.\n"

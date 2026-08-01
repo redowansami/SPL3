@@ -46,6 +46,7 @@ class FailureItem(BaseModel):
     prompt: str
     output: str
     score: float
+    nli_verdict: str | None = None
 
 
 class AttackPathStep(BaseModel):
@@ -57,6 +58,7 @@ class AttackPathStep(BaseModel):
     output: str
     triggers: list[str]
     score: float
+    nli_verdict: str | None = None
 
 
 class ProbeSummary(BaseModel):
@@ -76,6 +78,8 @@ class ScanResponse(BaseModel):
     failures: list[FailureItem]
     summary: list[ProbeSummary]
     attack_paths: list[AttackPathStep]
+    nli_filtered_count: int = 0
+    nli_filtered_hits: list[AttackPathStep] = []
     error: str | None = None
 
 
@@ -98,4 +102,6 @@ class ScanStatusResponse(BaseModel):
     failures: list[FailureItem] = []
     summary: list[ProbeSummary] = []
     attack_paths: list[AttackPathStep] = []
+    nli_filtered_count: int = 0
+    nli_filtered_hits: list[AttackPathStep] = []
     error: str | None = None

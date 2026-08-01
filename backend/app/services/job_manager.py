@@ -23,7 +23,12 @@ from app.config import SCAN_TIMEOUT_SECONDS
 from app.schemas import JobStatus, ScanRequest, ScanResponse, ScanStatusResponse
 from app.services.garak_runner import build_garak_command, prepare_run_dir
 from app.services.hitlog_parser import parse_hitlog
+from app.services.nli_verifier import verify_promptinject_hits
 from app.services.report_parser import parse_report
+
+# Probe whose hits get a second NLI-based semantic verification pass on top of
+# garak's own string-matching detector (see services/nli_verifier.py).
+_NLI_VERIFIED_PROBE = "promptinject.HijackHateHumans"
 
 
 @dataclass
@@ -150,6 +155,26 @@ def _watch_job(job: ScanJob) -> None:
         elif returncode == 0:
             failures, summary, attempts_evaluated = parse_report(job.report_path)
             attack_paths = parse_hitlog(job.hitlog_path)
+
+            nli_filtered_hits = []
+            if job.garak_probe == _NLI_VERIFIED_PROBE:
+                attack_paths, nli_filtered_hits = verify_promptinject_hits(attack_paths)
+                # AttackPathStep (hitlog) and FailureItem (report) come from two
+                # different garak output files with no shared id; correlate them
+                # by prompt text so a filtered hit's matching failure entry is
+                # dropped in lockstep.
+                filtered_prompts = {
+                    "\n".join(step.prompt_turns) for step in nli_filtered_hits
+                }
+                failures = [f for f in failures if f.prompt not in filtered_prompts]
+                verdict_by_prompt = {
+                    "\n".join(step.prompt_turns): step.nli_verdict for step in attack_paths
+                }
+                failures = [
+                    f.model_copy(update={"nli_verdict": verdict_by_prompt.get(f.prompt)})
+                    for f in failures
+                ]
+
             job.status = JobStatus.COMPLETED
             job.result = ScanResponse(
                 ok=True,
@@ -161,6 +186,8 @@ def _watch_job(job: ScanJob) -> None:
                 failures=failures,
                 summary=summary,
                 attack_paths=attack_paths,
+                nli_filtered_count=len(nli_filtered_hits),
+                nli_filtered_hits=nli_filtered_hits,
                 error=None,
             )
         else:

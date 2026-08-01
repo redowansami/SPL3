@@ -45,7 +45,8 @@ def parse_report(report_path: Path) -> tuple[list[FailureItem], list[ProbeSummar
             if entry_type == "attempt" and row.get("status") == ATTEMPT_COMPLETE:
                 attempts_evaluated += 1
                 probe = row.get("probe_classname", "unknown")
-                prompt_text = (row.get("prompt") or {}).get("text", "")
+                turns = (row.get("prompt") or {}).get("turns") or []
+                prompt_text = "\n".join((turn.get("content") or {}).get("text", "") for turn in turns)
                 outputs = row.get("outputs") or []
                 detector_results = row.get("detector_results") or {}
 
