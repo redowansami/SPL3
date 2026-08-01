@@ -2,7 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import SCAN_WORK_DIR
-from app.routers import probes, scan
+from app.routers import mitigations, probes, scan
 
 SCAN_WORK_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -17,6 +17,7 @@ app.add_middleware(
 
 app.include_router(probes.router)
 app.include_router(scan.router)
+app.include_router(mitigations.router)
 
 
 @app.get("/api/health")

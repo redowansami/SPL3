@@ -19,6 +19,24 @@ class ProbeInfo(BaseModel):
     description: str
 
 
+class AtlasTechniqueOut(BaseModel):
+    id: str
+    name: str
+
+
+class AtlasMitigationOut(BaseModel):
+    id: str
+    name: str
+    description: str
+
+
+class ProbeMitigationOut(BaseModel):
+    garak_probe: str
+    atlas_techniques: list[AtlasTechniqueOut]
+    atlas_mitigations: list[AtlasMitigationOut]
+    strategies: list[str]
+
+
 class ScanRequest(BaseModel):
     target_url: str = Field(..., description="Target REST endpoint to attack.")
     probe_id: str = Field(..., description="id from GET /api/probes to run.")

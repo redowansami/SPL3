@@ -48,3 +48,13 @@ export async function cancelScan(runId) {
   }
   return data;
 }
+
+export async function fetchMitigation(garakProbe) {
+  const res = await fetch(`${API_BASE}/api/mitigations/${encodeURIComponent(garakProbe)}`);
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new Error(data?.detail || `Failed to load mitigation (${res.status})`);
+  }
+  return data;
+}

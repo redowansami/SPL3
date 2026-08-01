@@ -9,7 +9,8 @@
       "Bash(npm create *)",
       "Bash(npm install *)",
       "Bash(\".venv/Scripts/python.exe\" -m pip install --only-binary=:all: -r requirements.txt)",
-      "Bash(npm run *)"
+      "Bash(npm run *)",
+      "WebFetch(domain:atlas.mitre.org)"
     ]
   }
 }

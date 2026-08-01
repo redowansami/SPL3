@@ -1,11 +1,87 @@
-import { Fragment } from "react";
+import { Fragment, useState } from "react";
+
+import { fetchMitigation } from "../api/client";
 
 function truncate(text, max = 400) {
   if (!text || text.length <= max) return text;
   return text.slice(0, max) + "…";
 }
 
+function MitigationModal({ probe, loading, error, data, onClose }) {
+  return (
+    <div className="mitigation-modal-overlay" onClick={onClose}>
+      <div className="mitigation-modal" onClick={(e) => e.stopPropagation()}>
+        <div className="mitigation-modal-header">
+          <h3>Mitigation — {probe}</h3>
+          <button className="mitigation-modal-close" onClick={onClose} aria-label="Close">
+            ×
+          </button>
+        </div>
+
+        {loading && <p className="mitigation-modal-status">Loading mitigation data…</p>}
+        {error && <p className="mitigation-modal-status mitigation-modal-error">{error}</p>}
+
+        {data && (
+          <div className="mitigation-modal-body">
+            <div className="mitigation-section">
+              <span className="mitigation-section-label">ATLAS Techniques</span>
+              <div className="mitigation-badge-row">
+                {data.atlas_techniques.map((t) => (
+                  <span key={t.id} className="mitigation-technique-badge">
+                    {t.id} — {t.name}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            <div className="mitigation-section">
+              <span className="mitigation-section-label">ATLAS Mitigations</span>
+              <ul className="mitigation-list">
+                {data.atlas_mitigations.map((m) => (
+                  <li key={m.id} className="mitigation-item">
+                    <span className="mitigation-item-title">
+                      Follow {m.id} ({m.name})
+                    </span>
+                    <span className="mitigation-item-desc">{m.description}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            <div className="mitigation-section">
+              <span className="mitigation-section-label">Recommended Strategies</span>
+              <ul className="mitigation-list">
+                {data.strategies.map((s, i) => (
+                  <li key={i} className="mitigation-item mitigation-strategy">
+                    {s}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function AttackPathPanel({ isRunning, error, result, elapsed = 0 }) {
+  const [mitigation, setMitigation] = useState(null);
+
+  async function openMitigation(probe) {
+    setMitigation({ probe, loading: true, error: null, data: null });
+    try {
+      const data = await fetchMitigation(probe);
+      setMitigation({ probe, loading: false, error: null, data });
+    } catch (err) {
+      setMitigation({ probe, loading: false, error: err.message, data: null });
+    }
+  }
+
+  function closeMitigation() {
+    setMitigation(null);
+  }
+
   if (isRunning) {
     return (
       <section className="attack-path-panel results-empty">
@@ -123,10 +199,23 @@ export default function AttackPathPanel({ isRunning, error, result, elapsed = 0 
                   )}
                 </div>
                 <div className="attack-path-node-score">score: {item.score.toFixed(2)}</div>
+                <button className="mitigation-button" onClick={() => openMitigation(item.probe)}>
+                  Mitigation
+                </button>
               </div>
             </div>
           ))}
         </div>
+      )}
+
+      {mitigation && (
+        <MitigationModal
+          probe={mitigation.probe}
+          loading={mitigation.loading}
+          error={mitigation.error}
+          data={mitigation.data}
+          onClose={closeMitigation}
+        />
       )}
     </section>
   );
