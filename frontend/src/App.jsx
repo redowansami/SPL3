@@ -1,9 +1,19 @@
 import { useEffect, useRef, useState } from "react";
 import "./App.css";
-import { fetchProbes, startScan, getScanStatus, cancelScan } from "./api/client";
+import {
+  fetchProbes,
+  startScan,
+  getScanStatus,
+  cancelScan,
+  fetchObjectives,
+  startPyritScan,
+  getPyritScanStatus,
+  cancelPyritScan,
+} from "./api/client";
 import TopBar from "./components/TopBar";
 import ProbeSidebar from "./components/ProbeSidebar";
 import AttackPathPanel from "./components/AttackPathPanel";
+import PyritResultPanel from "./components/PyritResultPanel";
 
 const POLL_INTERVAL_MS = 1200;
 const POLL_RETRY_DELAY_MS = 1500;
@@ -14,8 +24,11 @@ function App() {
   const [engine, setEngine] = useState("garak");
   const [requestTemplateText, setRequestTemplateText] = useState("");
   const [responseField, setResponseField] = useState("");
+  const [maxTurns, setMaxTurns] = useState("5");
   const [probes, setProbes] = useState([]);
   const [selectedProbeId, setSelectedProbeId] = useState(null);
+  const [objectives, setObjectives] = useState([]);
+  const [selectedObjectiveId, setSelectedObjectiveId] = useState(null);
   const [isRunning, setIsRunning] = useState(false);
   const [runId, setRunId] = useState(null);
   const [elapsed, setElapsed] = useState(0);
@@ -23,6 +36,9 @@ function App() {
   const [error, setError] = useState(null);
 
   const pollTimer = useRef(null);
+  // The engine the in-flight run was started with, so STOP / result rendering
+  // can't be mis-routed if the user toggles the engine mid-run.
+  const runEngine = useRef(engine);
 
   useEffect(() => {
     fetchProbes()
@@ -33,19 +49,30 @@ function App() {
         }
       })
       .catch((err) => setError(err.message));
+
+    fetchObjectives()
+      .then((data) => {
+        setObjectives(data);
+        if (data.length > 0) {
+          setSelectedObjectiveId(data[0].id);
+        }
+      })
+      .catch((err) => setError(err.message));
   }, []);
 
   useEffect(() => () => clearTimeout(pollTimer.current), []);
 
   const canRun =
-    engine === "garak" && targetUrl.trim().length > 0 && selectedProbeId && !isRunning;
+    targetUrl.trim().length > 0 &&
+    !isRunning &&
+    (engine === "garak" ? Boolean(selectedProbeId) : Boolean(selectedObjectiveId));
 
-  const poll = (id, failCount = 0) => {
-    getScanStatus(id)
+  const poll = (id, statusFn, failCount = 0) => {
+    statusFn(id)
       .then((data) => {
         setElapsed(data.elapsed_seconds);
         if (data.status === "running") {
-          pollTimer.current = setTimeout(() => poll(id, 0), POLL_INTERVAL_MS);
+          pollTimer.current = setTimeout(() => poll(id, statusFn, 0), POLL_INTERVAL_MS);
           return;
         }
         setResult(data);
@@ -53,7 +80,7 @@ function App() {
       })
       .catch((err) => {
         if (failCount < POLL_MAX_RETRIES) {
-          pollTimer.current = setTimeout(() => poll(id, failCount + 1), POLL_RETRY_DELAY_MS);
+          pollTimer.current = setTimeout(() => poll(id, statusFn, failCount + 1), POLL_RETRY_DELAY_MS);
         } else {
           setError(err.message);
           setIsRunning(false);
@@ -75,18 +102,31 @@ function App() {
       }
     }
 
+    runEngine.current = engine;
     setIsRunning(true);
     setElapsed(0);
     try {
-      const { run_id } = await startScan({
-        targetUrl,
-        probeId: selectedProbeId,
-        engine,
-        requestTemplate,
-        responseField,
-      });
-      setRunId(run_id);
-      poll(run_id);
+      if (engine === "garak") {
+        const { run_id } = await startScan({
+          targetUrl,
+          probeId: selectedProbeId,
+          engine,
+          requestTemplate,
+          responseField,
+        });
+        setRunId(run_id);
+        poll(run_id, getScanStatus);
+      } else {
+        const { run_id } = await startPyritScan({
+          targetUrl,
+          objectiveId: selectedObjectiveId,
+          maxTurns: maxTurns.trim() ? Number(maxTurns) : null,
+          requestTemplate,
+          responseField,
+        });
+        setRunId(run_id);
+        poll(run_id, getPyritScanStatus);
+      }
     } catch (err) {
       setError(err.message);
       setIsRunning(false);
@@ -96,7 +136,8 @@ function App() {
   const handleStop = async () => {
     clearTimeout(pollTimer.current);
     try {
-      const data = await cancelScan(runId);
+      const cancel = runEngine.current === "garak" ? cancelScan : cancelPyritScan;
+      const data = await cancel(runId);
       setResult(data);
     } catch (err) {
       setError(err.message);
@@ -116,23 +157,42 @@ function App() {
         onRequestTemplateChange={setRequestTemplateText}
         responseField={responseField}
         onResponseFieldChange={setResponseField}
+        maxTurns={maxTurns}
+        onMaxTurnsChange={setMaxTurns}
       />
 
-      {engine === "pyrit" && (
-        <div className="pyrit-banner">PyRIT is a demo placeholder and does not run scans yet.</div>
-      )}
-
       <main className="content-grid">
-        <ProbeSidebar
-          probes={probes}
-          selectedProbeId={selectedProbeId}
-          onSelectProbe={setSelectedProbeId}
-          onRun={handleRun}
-          onStop={handleStop}
-          canRun={canRun}
-          isRunning={isRunning}
-        />
-        <AttackPathPanel isRunning={isRunning} error={error} result={result} elapsed={elapsed} />
+        {engine === "garak" ? (
+          <ProbeSidebar
+            heading="Probes"
+            items={probes}
+            selectedId={selectedProbeId}
+            onSelect={setSelectedProbeId}
+            onRun={handleRun}
+            onStop={handleStop}
+            canRun={canRun}
+            isRunning={isRunning}
+          />
+        ) : (
+          <ProbeSidebar
+            heading="Objectives"
+            items={objectives}
+            selectedId={selectedObjectiveId}
+            onSelect={setSelectedObjectiveId}
+            onRun={handleRun}
+            onStop={handleStop}
+            canRun={canRun}
+            isRunning={isRunning}
+          />
+        )}
+
+        {/* While a run is active or showing a result, follow the engine that ran;
+            otherwise follow the current toggle so the empty state matches. */}
+        {(isRunning || result ? runEngine.current : engine) === "garak" ? (
+          <AttackPathPanel isRunning={isRunning} error={error} result={result} elapsed={elapsed} />
+        ) : (
+          <PyritResultPanel isRunning={isRunning} error={error} result={result} elapsed={elapsed} />
+        )}
       </main>
     </div>
   );

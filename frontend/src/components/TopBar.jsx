@@ -7,8 +7,8 @@ export default function TopBar({
   onRequestTemplateChange,
   responseField,
   onResponseFieldChange,
-  requestTimeout,
-  onRequestTimeoutChange,
+  maxTurns,
+  onMaxTurnsChange,
 }) {
   return (
     <header className="top-bar">
@@ -36,12 +36,28 @@ export default function TopBar({
         <button
           type="button"
           className={`engine-button ${engine === "pyrit" ? "active" : ""}`}
-          title="Demo only — not implemented yet"
+          title="Multi-turn attack driven by PyRIT"
           onClick={() => onEngineChange("pyrit")}
         >
           PyRIT
         </button>
       </div>
+      {engine === "pyrit" && (
+        <div className="max-turns-field">
+          <label className="top-bar-label" htmlFor="max-turns">
+            Max turns
+          </label>
+          <input
+            id="max-turns"
+            className="max-turns-input"
+            type="number"
+            min={1}
+            max={10}
+            value={maxTurns}
+            onChange={(e) => onMaxTurnsChange(e.target.value)}
+          />
+        </div>
+      )}
       <details className="advanced-config">
         <summary>Advanced target config</summary>
         <div className="top-bar-row">

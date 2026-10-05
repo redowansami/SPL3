@@ -24,6 +24,7 @@ from app.schemas import JobStatus, ScanRequest, ScanResponse, ScanStatusResponse
 from app.services.garak_runner import build_garak_command, prepare_run_dir
 from app.services.hitlog_parser import parse_hitlog
 from app.services.nli_verifier import verify_promptinject_hits
+from app.services.process_utils import kill_process_tree
 from app.services.report_parser import parse_report
 
 # Probe whose hits get a second NLI-based semantic verification pass on top of
@@ -100,7 +101,7 @@ def cancel_job(run_id: str) -> ScanJob | None:
             return job  # already terminal: idempotent no-op
         job.status = JobStatus.CANCELLED
 
-    _kill_process_tree(job.process.pid)
+    kill_process_tree(job.process.pid)
     return job
 
 
@@ -117,23 +118,13 @@ def to_status_response(job: ScanJob) -> ScanStatusResponse:
         return ScanStatusResponse(**payload)
 
 
-def _kill_process_tree(pid: int) -> None:
-    # /T walks the Windows parent-PID tree, which also reaches any
-    # multiprocessing.Pool worker processes garak may have spawned.
-    subprocess.run(
-        ["taskkill", "/F", "/T", "/PID", str(pid)],
-        capture_output=True,
-        text=True,
-    )  # ignore result: the process may have already exited on its own
-
-
 def _watch_job(job: ScanJob) -> None:
     try:
         stdout, stderr = job.process.communicate(timeout=SCAN_TIMEOUT_SECONDS)
         returncode = job.process.returncode
         timed_out = False
     except subprocess.TimeoutExpired:
-        _kill_process_tree(job.process.pid)
+        kill_process_tree(job.process.pid)
         stdout, stderr = job.process.communicate()  # drain buffered output after kill
         returncode = -1
         timed_out = True

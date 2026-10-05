@@ -112,6 +112,90 @@
   border-bottom: 1px solid var(--border);
 }
 
+.max-turns-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.max-turns-input {
+  width: 72px;
+  padding: 8px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text-h);
+  font-size: 14px;
+}
+
+/* ---------- PyRIT results (conversation transcript) ---------- */
+
+.pyrit-summary {
+  margin-bottom: 16px;
+}
+
+.pyrit-objective {
+  color: var(--text);
+  font-size: 13px;
+  margin: 4px 0 12px;
+}
+
+.pyrit-outcome-badge {
+  display: inline-block;
+  border-radius: 4px;
+  padding: 2px 10px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.pyrit-outcome-bad {
+  background: var(--code-bg);
+  color: var(--danger);
+}
+
+.pyrit-outcome-good {
+  background: var(--code-bg);
+  color: var(--accent);
+}
+
+.pyrit-rationale {
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--text-h);
+}
+
+.pyrit-rationale p {
+  margin: 4px 0 0;
+}
+
+.conversation-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.conversation-turn {
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  background: var(--bg);
+}
+
+.conversation-attacker {
+  border-left: 3px solid var(--accent);
+}
+
+.conversation-target {
+  border-left: 3px solid var(--danger);
+}
+
+.conversation-role {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text);
+}
+
 /* ---------- Content grid: 6 columns, sidebar + 5-wide attack paths ---------- */
 
 .content-grid {

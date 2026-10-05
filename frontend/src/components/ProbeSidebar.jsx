@@ -1,25 +1,26 @@
 export default function ProbeSidebar({
-  probes,
-  selectedProbeId,
-  onSelectProbe,
+  items,
+  selectedId,
+  onSelect,
   onRun,
   onStop,
   canRun,
   isRunning,
+  heading = "Probes",
 }) {
   return (
     <aside className="probe-sidebar">
-      <h2 className="sidebar-heading">Probes</h2>
+      <h2 className="sidebar-heading">{heading}</h2>
       <div className="probe-list">
-        {probes.map((probe) => (
+        {items.map((item) => (
           <button
-            key={probe.id}
+            key={item.id}
             type="button"
-            className={`probe-button ${selectedProbeId === probe.id ? "active" : ""}`}
-            title={probe.description}
-            onClick={() => onSelectProbe(probe.id)}
+            className={`probe-button ${selectedId === item.id ? "active" : ""}`}
+            title={item.description}
+            onClick={() => onSelect(item.id)}
           >
-            {probe.label}
+            {item.label}
           </button>
         ))}
       </div>
