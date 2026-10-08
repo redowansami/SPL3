@@ -1,7 +1,7 @@
 import { Fragment, useState } from "react";
 
 import { fetchMitigation } from "../api/client";
-import ExportPdfButton from "./ExportPdfButton";
+import ExportMenuButton from "./ExportMenuButton";
 import MitigationModal from "./MitigationModal";
 
 function truncate(text, max = 400) {
@@ -83,7 +83,7 @@ export default function AttackPathPanel({ isRunning, error, result, elapsed = 0,
       <div className="results-summary">
         <div className="results-summary-head">
           <h2>Results — {result.garak_probe}</h2>
-          {meta && <ExportPdfButton engine="garak" result={result} meta={meta} />}
+          {meta && <ExportMenuButton engine="garak" result={result} meta={meta} />}
         </div>
         <div className="results-stats">
           <div className="stat">
