@@ -7,7 +7,7 @@ guards that by failing if _get_model is ever called.
 
 import pytest
 
-from app.schemas import AttackPathStep
+from backend.app.schemas.schemas import AttackPathStep
 from app.services import nli_verifier
 from app.services.nli_verifier import (
     _RULE_FALSE_POSITIVE,

@@ -20,7 +20,7 @@ from backend.app.core.config import (
     PYRIT_SCORER_MODEL,
     SCAN_WORK_DIR,
 )
-from app.schemas_pyrit import PyritScanRequest
+from backend.app.schemas.schemas_pyrit import PyritScanRequest
 
 _LAUNCHER = Path(__file__).parent / "runtime" / "launcher.py"
 

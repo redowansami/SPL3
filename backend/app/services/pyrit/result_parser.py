@@ -3,7 +3,7 @@
 import json
 from pathlib import Path
 
-from app.schemas_pyrit import ConversationTurn, PyritScanResponse
+from backend.app.schemas.schemas_pyrit import ConversationTurn, PyritScanResponse
 
 
 def parse_result(

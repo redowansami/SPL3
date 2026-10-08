@@ -18,7 +18,7 @@ from backend.app.core.config import (
     DEFAULT_RESPONSE_FIELD,
     TIMEOUT_SKIP_STATUS_CODE,
 )
-from app.schemas import ScanRequest
+from backend.app.schemas.schemas import ScanRequest
 
 
 def build_rest_generator_config(scan_request: ScanRequest) -> dict:
