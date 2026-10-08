@@ -5,6 +5,7 @@ attacker-vs-target conversation judged by PyRIT's own LLM scorer, not a set of
 garak attempts/detectors, so its result has a different shape.
 """
 
+from datetime import datetime
 from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
@@ -98,6 +99,11 @@ class PyritScanStatusResponse(BaseModel):
     run_id: str
     status: JobStatus
     elapsed_seconds: float
+    # Populated only for persisted history detail lookups (not live polling), so
+    # the frontend can build an export report without a second request.
+    engine: str | None = None
+    started_at: datetime | None = None
+    ended_at: datetime | None = None
     # Populated only once status is terminal; mirrors PyritScanResponse's fields.
     ok: bool | None = None
     target_url: str | None = None
