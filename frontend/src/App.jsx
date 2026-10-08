@@ -37,6 +37,8 @@ function App() {
   const [elapsed, setElapsed] = useState(0);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
+  const [runStartedAt, setRunStartedAt] = useState(null);
+  const [runEndedAt, setRunEndedAt] = useState(null);
 
   const pollTimer = useRef(null);
   // The engine the in-flight run was started with, so STOP / result rendering
@@ -79,6 +81,7 @@ function App() {
           return;
         }
         setResult(data);
+        setRunEndedAt(new Date());
         setIsRunning(false);
       })
       .catch((err) => {
@@ -94,6 +97,8 @@ function App() {
   const handleRun = async () => {
     setError(null);
     setResult(null);
+    setRunStartedAt(new Date());
+    setRunEndedAt(null);
 
     let requestTemplate = null;
     if (requestTemplateText.trim()) {
@@ -142,6 +147,7 @@ function App() {
       const cancel = runEngine.current === "garak" ? cancelScan : cancelPyritScan;
       const data = await cancel(runId);
       setResult(data);
+      setRunEndedAt(new Date());
     } catch (err) {
       setError(err.message);
     } finally {
@@ -197,9 +203,37 @@ function App() {
                 {/* While a run is active or showing a result, follow the engine that ran;
                     otherwise follow the current toggle so the empty state matches. */}
                 {(isRunning || result ? runEngine.current : engine) === "garak" ? (
-                  <AttackPathPanel isRunning={isRunning} error={error} result={result} elapsed={elapsed} />
+                  <AttackPathPanel
+                    isRunning={isRunning}
+                    error={error}
+                    result={result}
+                    elapsed={elapsed}
+                    meta={
+                      result && {
+                        targetUrl,
+                        engine: "garak",
+                        runId,
+                        startedAt: runStartedAt,
+                        endedAt: runEndedAt,
+                      }
+                    }
+                  />
                 ) : (
-                  <PyritResultPanel isRunning={isRunning} error={error} result={result} elapsed={elapsed} />
+                  <PyritResultPanel
+                    isRunning={isRunning}
+                    error={error}
+                    result={result}
+                    elapsed={elapsed}
+                    meta={
+                      result && {
+                        targetUrl,
+                        engine: "pyrit",
+                        runId,
+                        startedAt: runStartedAt,
+                        endedAt: runEndedAt,
+                      }
+                    }
+                  />
                 )}
               </>
             }
