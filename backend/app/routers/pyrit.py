@@ -2,11 +2,13 @@
 
 import os
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from app.core.config import PYRIT_API_KEY_ENV
 from app.constants.pyrit_mitigations import get_objective_mitigation
 from app.constants.pyrit_objectives import PYRIT_OBJECTIVES, PYRIT_OBJECTIVES_BY_ID
+from app.core.security import get_current_user
+from app.db.models import User
 from app.schemas.schemas_pyrit import (
     PyritMitigationOut,
     PyritObjectiveInfo,
@@ -31,7 +33,9 @@ def get_pyrit_mitigation(objective_id: str) -> PyritMitigationOut:
 
 
 @router.post("/scan", response_model=PyritScanStartResponse, status_code=status.HTTP_202_ACCEPTED)
-def start_pyrit_scan(req: PyritScanRequest) -> PyritScanStartResponse:
+def start_pyrit_scan(
+    req: PyritScanRequest, current_user: User = Depends(get_current_user)
+) -> PyritScanStartResponse:
     preset = None
     if req.objective_id is not None:
         preset = PYRIT_OBJECTIVES_BY_ID.get(req.objective_id)
@@ -51,21 +55,22 @@ def start_pyrit_scan(req: PyritScanRequest) -> PyritScanStartResponse:
             detail=f"PyRIT needs an attacker/scorer LLM: set the {PYRIT_API_KEY_ENV} environment variable.",
         )
 
-    run_id = job_manager.start_pyrit_job(req, req.objective_id, objective, success_criteria)
+    run_id = job_manager.start_pyrit_job(req, req.objective_id, objective, success_criteria, user_id=current_user.id)
     return PyritScanStartResponse(run_id=run_id)
 
 
 @router.get("/scan/{run_id}", response_model=PyritScanStatusResponse)
-def get_pyrit_scan_status(run_id: str) -> PyritScanStatusResponse:
+def get_pyrit_scan_status(run_id: str, current_user: User = Depends(get_current_user)) -> PyritScanStatusResponse:
     job = job_manager.get_job(run_id)
-    if job is None:
+    if job is None or job.user_id != current_user.id:
         raise HTTPException(status_code=404, detail=f"Unknown run_id '{run_id}'.")
     return job_manager.to_status_response(job)
 
 
 @router.post("/scan/{run_id}/cancel", response_model=PyritScanStatusResponse)
-def cancel_pyrit_scan(run_id: str) -> PyritScanStatusResponse:
-    job = job_manager.cancel_job(run_id)
-    if job is None:
+def cancel_pyrit_scan(run_id: str, current_user: User = Depends(get_current_user)) -> PyritScanStatusResponse:
+    job = job_manager.get_job(run_id)
+    if job is None or job.user_id != current_user.id:
         raise HTTPException(status_code=404, detail=f"Unknown run_id '{run_id}'.")
+    job = job_manager.cancel_job(run_id)
     return job_manager.to_status_response(job)
