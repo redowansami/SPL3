@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 
-from backend.app.constants.probes import PROBES_BY_ID
-from backend.app.schemas.schemas import ScanRequest, ScanStartResponse, ScanStatusResponse
+from app.constants.probes import PROBES_BY_ID
+from app.schemas.schemas import ScanRequest, ScanStartResponse, ScanStatusResponse
 from app.services import job_manager
 
 router = APIRouter(prefix="/api/scan", tags=["scan"])

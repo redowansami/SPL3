@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException
 
-from backend.app.constants.mitigations import get_mitigation
-from backend.app.schemas.schemas import ProbeMitigationOut
+from app.constants.mitigations import get_mitigation
+from app.schemas.schemas import ProbeMitigationOut
 
 router = APIRouter(prefix="/api/mitigations", tags=["mitigations"])
 
