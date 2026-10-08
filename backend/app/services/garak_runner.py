@@ -11,7 +11,7 @@ import json
 import uuid
 from pathlib import Path
 
-from app.config import (
+from backend.app.core.config import (
     GENERATIONS_PER_PROMPT,
     PYTHON_EXECUTABLE,
     SCAN_WORK_DIR,
