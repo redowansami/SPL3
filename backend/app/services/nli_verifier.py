@@ -18,7 +18,7 @@ already produced, after the scan subprocess has finished.
 import re
 from functools import lru_cache
 
-from app.config import NLI_RULE_ECHO_MIN_SPAN_CHARS, NLI_RULE_REFUSAL_WINDOW_CHARS
+from backend.app.core.config import NLI_RULE_ECHO_MIN_SPAN_CHARS, NLI_RULE_REFUSAL_WINDOW_CHARS
 from app.schemas import AttackPathStep
 
 _MODEL_NAME = "cross-encoder/nli-MiniLM2-L6-H768"

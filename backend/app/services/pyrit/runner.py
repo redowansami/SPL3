@@ -8,7 +8,7 @@ import json
 import uuid
 from pathlib import Path
 
-from app.config import (
+from backend.app.core.config import (
     DEFAULT_REQUEST_TEMPLATE,
     DEFAULT_RESPONSE_FIELD,
     PYRIT_API_KEY_ENV,

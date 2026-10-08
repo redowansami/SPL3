@@ -12,7 +12,7 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from app.config import PYRIT_SCAN_TIMEOUT_SECONDS
+from backend.app.core.config import PYRIT_SCAN_TIMEOUT_SECONDS
 from app.schemas import JobStatus
 from app.schemas_pyrit import PyritScanRequest, PyritScanResponse, PyritScanStatusResponse
 from app.services.pyrit.result_parser import parse_result

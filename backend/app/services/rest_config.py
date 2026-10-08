@@ -12,7 +12,7 @@ override `request_template` / `response_field` on the `ScanRequest` to match its
 request body shape and response field name.
 """
 
-from app.config import (
+from backend.app.core.config import (
     DEFAULT_REQUEST_TEMPLATE,
     DEFAULT_REQUEST_TIMEOUT_SECONDS,
     DEFAULT_RESPONSE_FIELD,
