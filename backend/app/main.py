@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from backend.app.core.config import SCAN_WORK_DIR
-from backend.app.core.database import init_db
+from app.core.config import SCAN_WORK_DIR
+from app.core.database import init_db
 from app.routers import auth, mitigations, probes, pyrit, scan
 
 SCAN_WORK_DIR.mkdir(parents=True, exist_ok=True)

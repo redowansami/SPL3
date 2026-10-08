@@ -16,8 +16,8 @@ A generation is a "hit" (i.e. the target failed the probe) when its detector sco
 import json
 from pathlib import Path
 
-from backend.app.core.config import HIT_SCORE_THRESHOLD
-from backend.app.schemas.schemas import FailureItem, ProbeSummary
+from app.core.config import HIT_SCORE_THRESHOLD
+from app.schemas.schemas import FailureItem, ProbeSummary
 
 ATTEMPT_COMPLETE = 2
 
