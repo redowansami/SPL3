@@ -109,3 +109,13 @@ export async function cancelPyritScan(runId) {
   }
   return data;
 }
+
+export async function fetchPyritMitigation(objectiveId) {
+  const res = await fetch(`${API_BASE}/api/pyrit/mitigations/${encodeURIComponent(objectiveId)}`);
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new Error(data?.detail || `Failed to load mitigation (${res.status})`);
+  }
+  return data;
+}
