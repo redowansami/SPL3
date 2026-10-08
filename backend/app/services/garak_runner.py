@@ -17,7 +17,7 @@ from backend.app.core.config import (
     SCAN_WORK_DIR,
     SOFT_PROBE_PROMPT_CAP,
 )
-from app.schemas import ScanRequest
+from backend.app.schemas.schemas import ScanRequest
 from app.services.rest_config import build_rest_generator_config
 
 
