@@ -3,11 +3,11 @@
 from fastapi.testclient import TestClient
 
 from app.main import app
-from app.pyrit_mitigations import (
+from backend.app.constants.pyrit_mitigations import (
     PYRIT_MITIGATION_REGISTRY,
     get_objective_mitigation,
 )
-from app.pyrit_objectives import PYRIT_OBJECTIVES
+from backend.app.constants.pyrit_objectives import PYRIT_OBJECTIVES
 
 client = TestClient(app)
 
