@@ -8,7 +8,7 @@ import json
 import uuid
 from pathlib import Path
 
-from app.config import (
+from app.core.config import (
     DEFAULT_REQUEST_TEMPLATE,
     DEFAULT_RESPONSE_FIELD,
     PYRIT_API_KEY_ENV,
@@ -20,7 +20,7 @@ from app.config import (
     PYRIT_SCORER_MODEL,
     SCAN_WORK_DIR,
 )
-from app.schemas_pyrit import PyritScanRequest
+from app.schemas.schemas_pyrit import PyritScanRequest
 
 _LAUNCHER = Path(__file__).parent / "runtime" / "launcher.py"
 

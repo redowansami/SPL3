@@ -19,8 +19,8 @@ import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from app.config import SCAN_TIMEOUT_SECONDS
-from app.schemas import JobStatus, ScanRequest, ScanResponse, ScanStatusResponse
+from app.core.config import SCAN_TIMEOUT_SECONDS
+from app.schemas.schemas import JobStatus, ScanRequest, ScanResponse, ScanStatusResponse
 from app.services.garak_runner import build_garak_command, prepare_run_dir
 from app.services.hitlog_parser import parse_hitlog
 from app.services.nli_verifier import verify_promptinject_hits

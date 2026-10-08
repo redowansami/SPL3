@@ -8,7 +8,7 @@ from pathlib import Path
 
 from starlette.concurrency import run_in_threadpool
 
-from app.config import (
+from app.core.config import (
     MAIL_FROM,
     MAIL_FROM_NAME,
     MAIL_PASSWORD,

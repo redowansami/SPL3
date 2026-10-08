@@ -4,10 +4,10 @@ import os
 
 from fastapi import APIRouter, HTTPException, status
 
-from app.config import PYRIT_API_KEY_ENV
-from app.pyrit_mitigations import get_objective_mitigation
-from app.pyrit_objectives import PYRIT_OBJECTIVES, PYRIT_OBJECTIVES_BY_ID
-from app.schemas_pyrit import (
+from app.core.config import PYRIT_API_KEY_ENV
+from app.constants.pyrit_mitigations import get_objective_mitigation
+from app.constants.pyrit_objectives import PYRIT_OBJECTIVES, PYRIT_OBJECTIVES_BY_ID
+from app.schemas.schemas_pyrit import (
     PyritMitigationOut,
     PyritObjectiveInfo,
     PyritScanRequest,

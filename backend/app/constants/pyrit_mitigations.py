@@ -17,7 +17,7 @@ atlas.mitre.org before relying on this for compliance reporting.
 
 from dataclasses import dataclass, field
 
-from app.atlas import (
+from app.constants.atlas import (
     AtlasMitigation,
     AtlasTechnique,
     M0019,

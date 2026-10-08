@@ -5,7 +5,7 @@ to keep the MVP's scan times short and its surface area predictable. Each entry 
 a UI-friendly id/label to the exact `--probes` class path Garak expects.
 """
 
-from app.schemas import ProbeInfo
+from app.schemas.schemas import ProbeInfo
 
 PROBE_REGISTRY: list[ProbeInfo] = [
     ProbeInfo(

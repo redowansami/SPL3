@@ -5,7 +5,7 @@ the condition it checks every target reply against (`success_criteria`). A scan
 can override either with free text (see `PyritScanRequest`).
 """
 
-from app.schemas_pyrit import PyritObjectiveInfo
+from app.schemas.schemas_pyrit import PyritObjectiveInfo
 
 PYRIT_OBJECTIVES: list[PyritObjectiveInfo] = [
     PyritObjectiveInfo(

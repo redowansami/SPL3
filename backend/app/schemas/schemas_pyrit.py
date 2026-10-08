@@ -9,8 +9,8 @@ from typing import Any, Literal
 
 from pydantic import BaseModel, Field, model_validator
 
-from app.config import PYRIT_MAX_TURNS_LIMIT
-from app.schemas import AtlasMitigationOut, AtlasTechniqueOut, JobStatus
+from app.core.config import PYRIT_MAX_TURNS_LIMIT
+from app.schemas.schemas import AtlasMitigationOut, AtlasTechniqueOut, JobStatus
 
 
 class PyritObjectiveInfo(BaseModel):
