@@ -5,7 +5,7 @@ from datetime import datetime, timezone
 from sqlalchemy import Boolean, DateTime, Integer, String
 from sqlalchemy.orm import Mapped, mapped_column
 
-from app.database import Base
+from backend.app.core.database import Base
 
 
 def _utcnow() -> datetime:
