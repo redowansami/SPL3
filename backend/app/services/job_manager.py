@@ -13,19 +13,24 @@ parallel attempts, and `Popen.terminate()` on Windows only signals the direct
 child, not its descendants.
 """
 
+import logging
 import subprocess
 import threading
 import time
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 
 from app.core.config import SCAN_TIMEOUT_SECONDS
+from app.db import repository
 from app.schemas.schemas import JobStatus, ScanRequest, ScanResponse, ScanStatusResponse
 from app.services.garak_runner import build_garak_command, prepare_run_dir
 from app.services.hitlog_parser import parse_hitlog
 from app.services.nli_verifier import verify_promptinject_hits
 from app.services.process_utils import kill_process_tree
 from app.services.report_parser import parse_report
+
+logger = logging.getLogger(__name__)
 
 # Probe whose hits get a second NLI-based semantic verification pass on top of
 # garak's own string-matching detector (see services/nli_verifier.py).
@@ -42,6 +47,8 @@ class ScanJob:
     report_path: Path
     hitlog_path: Path
     start_time: float
+    started_at_wall: datetime
+    user_id: int
     status: JobStatus = JobStatus.RUNNING
     result: ScanResponse | None = None
     end_time: float | None = None
@@ -52,7 +59,7 @@ _jobs: dict[str, ScanJob] = {}
 _jobs_lock = threading.Lock()
 
 
-def start_scan_job(scan_request: ScanRequest, probe_id: str, garak_probe: str) -> str:
+def start_scan_job(scan_request: ScanRequest, probe_id: str, garak_probe: str, user_id: int) -> str:
     run_id, run_dir, generator_config_path, run_config_path, report_prefix = prepare_run_dir(scan_request)
     command = build_garak_command(generator_config_path, run_config_path, garak_probe, report_prefix)
     report_path = Path(f"{report_prefix}.report.jsonl")
@@ -78,6 +85,8 @@ def start_scan_job(scan_request: ScanRequest, probe_id: str, garak_probe: str) -
         report_path=report_path,
         hitlog_path=hitlog_path,
         start_time=time.monotonic(),
+        started_at_wall=datetime.now(timezone.utc).replace(tzinfo=None),
+        user_id=user_id,
     )
     with _jobs_lock:
         _jobs[run_id] = job
@@ -135,56 +144,73 @@ def _watch_job(job: ScanJob) -> None:
             if job.result is None:
                 job.result = _build_error_response(job, "Scan was cancelled.")
                 job.end_time = time.monotonic()
-            return
-
-        job.end_time = time.monotonic()
-        if timed_out:
-            job.status = JobStatus.TIMED_OUT
-            job.result = _build_error_response(
-                job, f"Scan exceeded the {SCAN_TIMEOUT_SECONDS}s timeout limit and was stopped automatically."
-            )
-        elif returncode == 0:
-            failures, summary, attempts_evaluated = parse_report(job.report_path)
-            attack_paths = parse_hitlog(job.hitlog_path)
-
-            nli_filtered_hits = []
-            if job.garak_probe == _NLI_VERIFIED_PROBE:
-                attack_paths, nli_filtered_hits = verify_promptinject_hits(attack_paths)
-                # AttackPathStep (hitlog) and FailureItem (report) come from two
-                # different garak output files with no shared id; correlate them
-                # by prompt text so a filtered hit's matching failure entry is
-                # dropped in lockstep.
-                filtered_prompts = {
-                    "\n".join(step.prompt_turns) for step in nli_filtered_hits
-                }
-                failures = [f for f in failures if f.prompt not in filtered_prompts]
-                verdict_by_prompt = {
-                    "\n".join(step.prompt_turns): step.nli_verdict for step in attack_paths
-                }
-                failures = [
-                    f.model_copy(update={"nli_verdict": verdict_by_prompt.get(f.prompt)})
-                    for f in failures
-                ]
-
-            job.status = JobStatus.COMPLETED
-            job.result = ScanResponse(
-                ok=True,
-                probe_id=job.probe_id,
-                garak_probe=job.garak_probe,
-                target_url=job.target_url,
-                attempts_evaluated=attempts_evaluated,
-                failure_count=len(failures),
-                failures=failures,
-                summary=summary,
-                attack_paths=attack_paths,
-                nli_filtered_count=len(nli_filtered_hits),
-                nli_filtered_hits=nli_filtered_hits,
-                error=None,
-            )
         else:
-            job.status = JobStatus.FAILED
-            error_tail = (stderr or stdout or "").strip()[-2000:]
-            job.result = _build_error_response(job, error_tail or "Garak run failed with no output.")
+            job.end_time = time.monotonic()
+            if timed_out:
+                job.status = JobStatus.TIMED_OUT
+                job.result = _build_error_response(
+                    job, f"Scan exceeded the {SCAN_TIMEOUT_SECONDS}s timeout limit and was stopped automatically."
+                )
+            elif returncode == 0:
+                failures, summary, attempts_evaluated = parse_report(job.report_path)
+                attack_paths = parse_hitlog(job.hitlog_path)
+
+                nli_filtered_hits = []
+                if job.garak_probe == _NLI_VERIFIED_PROBE:
+                    attack_paths, nli_filtered_hits = verify_promptinject_hits(attack_paths)
+                    # AttackPathStep (hitlog) and FailureItem (report) come from two
+                    # different garak output files with no shared id; correlate them
+                    # by prompt text so a filtered hit's matching failure entry is
+                    # dropped in lockstep.
+                    filtered_prompts = {
+                        "\n".join(step.prompt_turns) for step in nli_filtered_hits
+                    }
+                    failures = [f for f in failures if f.prompt not in filtered_prompts]
+                    verdict_by_prompt = {
+                        "\n".join(step.prompt_turns): step.nli_verdict for step in attack_paths
+                    }
+                    failures = [
+                        f.model_copy(update={"nli_verdict": verdict_by_prompt.get(f.prompt)})
+                        for f in failures
+                    ]
+
+                job.status = JobStatus.COMPLETED
+                job.result = ScanResponse(
+                    ok=True,
+                    probe_id=job.probe_id,
+                    garak_probe=job.garak_probe,
+                    target_url=job.target_url,
+                    attempts_evaluated=attempts_evaluated,
+                    failure_count=len(failures),
+                    failures=failures,
+                    summary=summary,
+                    attack_paths=attack_paths,
+                    nli_filtered_count=len(nli_filtered_hits),
+                    nli_filtered_hits=nli_filtered_hits,
+                    error=None,
+                )
+            else:
+                job.status = JobStatus.FAILED
+                error_tail = (stderr or stdout or "").strip()[-2000:]
+                job.result = _build_error_response(job, error_tail or "Garak run failed with no output.")
+
+        final_status, final_result = job.status, job.result
+
+    ended_at_wall = datetime.now(timezone.utc).replace(tzinfo=None)
+    persisted = repository.save_garak_scan(
+        run_id=job.run_id,
+        status=final_status,
+        target_url=job.target_url,
+        probe_id=job.probe_id,
+        garak_probe=job.garak_probe,
+        artifact_dir=str(job.report_path.parent),
+        started_at=job.started_at_wall,
+        ended_at=ended_at_wall,
+        result=final_result,
+        user_id=job.user_id,
+    )
+    if not persisted:
+        logger.error("Scan %s finished but was NOT persisted to the database.", job.run_id)
 
 
 def _build_error_response(job: ScanJob, error: str) -> ScanResponse:

@@ -6,18 +6,23 @@ drives PyRIT's launcher and parses its result.json. Kept as a separate module so
 the two engines never entangle.
 """
 
+import logging
 import subprocess
 import threading
 import time
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 
 from app.core.config import PYRIT_SCAN_TIMEOUT_SECONDS
+from app.db import repository
 from app.schemas.schemas import JobStatus
 from app.schemas.schemas_pyrit import PyritScanRequest, PyritScanResponse, PyritScanStatusResponse
 from app.services.pyrit.result_parser import parse_result
 from app.services.pyrit.runner import build_command, prepare_run_dir
 from app.services.process_utils import kill_process_tree
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -29,6 +34,8 @@ class PyritJob:
     objective: str
     result_path: Path
     start_time: float
+    started_at_wall: datetime
+    user_id: int
     status: JobStatus = JobStatus.RUNNING
     result: PyritScanResponse | None = None
     end_time: float | None = None
@@ -40,7 +47,7 @@ _jobs_lock = threading.Lock()
 
 
 def start_pyrit_job(
-    req: PyritScanRequest, objective_id: str | None, objective: str, success_criteria: str
+    req: PyritScanRequest, objective_id: str | None, objective: str, success_criteria: str, user_id: int
 ) -> str:
     run_id, run_dir, run_config_path, result_path = prepare_run_dir(req, objective, success_criteria)
     command = build_command(run_config_path, result_path)
@@ -64,6 +71,8 @@ def start_pyrit_job(
         objective=objective,
         result_path=result_path,
         start_time=time.monotonic(),
+        started_at_wall=datetime.now(timezone.utc).replace(tzinfo=None),
+        user_id=user_id,
     )
     with _jobs_lock:
         _jobs[run_id] = job
@@ -121,26 +130,43 @@ def _watch_job(job: PyritJob) -> None:
             if job.result is None:
                 job.result = _error_response(job, "Scan was cancelled.")
                 job.end_time = time.monotonic()
-            return
-
-        job.end_time = time.monotonic()
-        if timed_out:
-            job.status = JobStatus.TIMED_OUT
-            job.result = _error_response(
-                job, f"Scan exceeded the {PYRIT_SCAN_TIMEOUT_SECONDS}s timeout limit and was stopped automatically."
-            )
-        elif returncode == 0:
-            job.status = JobStatus.COMPLETED
-            job.result = parse_result(
-                job.result_path,
-                target_url=job.target_url,
-                objective_id=job.objective_id,
-                objective=job.objective,
-            )
         else:
-            job.status = JobStatus.FAILED
-            error_tail = (stderr or stdout or "").strip()[-2000:]
-            job.result = _error_response(job, error_tail or "PyRIT run failed with no output.")
+            job.end_time = time.monotonic()
+            if timed_out:
+                job.status = JobStatus.TIMED_OUT
+                job.result = _error_response(
+                    job, f"Scan exceeded the {PYRIT_SCAN_TIMEOUT_SECONDS}s timeout limit and was stopped automatically."
+                )
+            elif returncode == 0:
+                job.status = JobStatus.COMPLETED
+                job.result = parse_result(
+                    job.result_path,
+                    target_url=job.target_url,
+                    objective_id=job.objective_id,
+                    objective=job.objective,
+                )
+            else:
+                job.status = JobStatus.FAILED
+                error_tail = (stderr or stdout or "").strip()[-2000:]
+                job.result = _error_response(job, error_tail or "PyRIT run failed with no output.")
+
+        final_status, final_result = job.status, job.result
+
+    ended_at_wall = datetime.now(timezone.utc).replace(tzinfo=None)
+    persisted = repository.save_pyrit_scan(
+        run_id=job.run_id,
+        status=final_status,
+        target_url=job.target_url,
+        objective_id=job.objective_id,
+        objective=job.objective,
+        artifact_dir=str(job.result_path.parent),
+        started_at=job.started_at_wall,
+        ended_at=ended_at_wall,
+        result=final_result,
+        user_id=job.user_id,
+    )
+    if not persisted:
+        logger.error("Pyrit scan %s finished but was NOT persisted to the database.", job.run_id)
 
 
 def _error_response(job: PyritJob, error: str) -> PyritScanResponse:

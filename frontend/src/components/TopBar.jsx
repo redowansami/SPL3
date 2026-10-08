@@ -1,3 +1,5 @@
+import { useLocation, useNavigate } from "react-router-dom";
+
 export default function TopBar({
   targetUrl,
   onTargetUrlChange,
@@ -10,8 +12,15 @@ export default function TopBar({
   maxTurns,
   onMaxTurnsChange,
 }) {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isHistory = location.pathname.startsWith("/history");
+
   return (
     <header className="top-bar">
+      <button type="button" className="history-button" onClick={() => navigate(isHistory ? "/" : "/history")}>
+        {isHistory ? "Back to Scan" : "History"}
+      </button>
       <div className="top-bar-row">
         <label className="top-bar-label" htmlFor="target-url">
           Target URL
