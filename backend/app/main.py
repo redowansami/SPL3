@@ -1,0 +1,26 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from app.config import SCAN_WORK_DIR
+from app.routers import mitigations, probes, pyrit, scan
+
+SCAN_WORK_DIR.mkdir(parents=True, exist_ok=True)
+
+app = FastAPI(title="ATLAS-Scan API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(probes.router)
+app.include_router(scan.router)
+app.include_router(mitigations.router)
+app.include_router(pyrit.router)
+
+
+@app.get("/api/health")
+def health() -> dict:
+    return {"ok": True}
