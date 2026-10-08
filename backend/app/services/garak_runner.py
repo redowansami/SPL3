@@ -11,13 +11,13 @@ import json
 import uuid
 from pathlib import Path
 
-from backend.app.core.config import (
+from app.core.config import (
     GENERATIONS_PER_PROMPT,
     PYTHON_EXECUTABLE,
     SCAN_WORK_DIR,
     SOFT_PROBE_PROMPT_CAP,
 )
-from backend.app.schemas.schemas import ScanRequest
+from app.schemas.schemas import ScanRequest
 from app.services.rest_config import build_rest_generator_config
 
 
