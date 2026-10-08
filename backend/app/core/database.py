@@ -19,7 +19,7 @@ def init_db() -> None:
     if engine is None:
         print("[auth] DATABASE_URL is not set; skipping table creation.")
         return
-    from app import models  # noqa: F401 - registers models on Base before create_all
+    from backend.app.db import models  # noqa: F401 - registers models on Base before create_all
 
     try:
         Base.metadata.create_all(bind=engine)

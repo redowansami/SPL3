@@ -9,7 +9,7 @@ from sqlalchemy.orm import Session
 from backend.app.core.config import OTP_EXPIRE_MINUTES
 from backend.app.core.database import get_db
 from app.email_utils import generate_otp, send_otp_email
-from app.models import User
+from backend.app.db.models import User
 from backend.app.schemas.schemas_auth import (
     LoginRequest,
     LoginResponse,

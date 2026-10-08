@@ -9,7 +9,7 @@ from sqlalchemy.pool import StaticPool
 from app import email_utils
 from backend.app.core.database import Base, get_db
 from app.main import app
-from app.models import User
+from backend.app.db.models import User
 
 _engine = create_engine("sqlite:///:memory:", connect_args={"check_same_thread": False}, poolclass=StaticPool)
 _TestingSessionLocal = sessionmaker(bind=_engine, autoflush=False, autocommit=False)
