@@ -17,7 +17,7 @@ import json
 from pathlib import Path
 
 from backend.app.core.config import HIT_SCORE_THRESHOLD
-from app.schemas import FailureItem, ProbeSummary
+from backend.app.schemas.schemas import FailureItem, ProbeSummary
 
 ATTEMPT_COMPLETE = 2
 

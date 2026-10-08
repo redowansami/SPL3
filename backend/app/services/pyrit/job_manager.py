@@ -13,8 +13,8 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 from backend.app.core.config import PYRIT_SCAN_TIMEOUT_SECONDS
-from app.schemas import JobStatus
-from app.schemas_pyrit import PyritScanRequest, PyritScanResponse, PyritScanStatusResponse
+from backend.app.schemas.schemas import JobStatus
+from backend.app.schemas.schemas_pyrit import PyritScanRequest, PyritScanResponse, PyritScanStatusResponse
 from app.services.pyrit.result_parser import parse_result
 from app.services.pyrit.runner import build_command, prepare_run_dir
 from app.services.process_utils import kill_process_tree

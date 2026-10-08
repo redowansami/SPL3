@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 
 from app.probes import PROBE_REGISTRY
-from app.schemas import ProbeInfo
+from backend.app.schemas.schemas import ProbeInfo
 
 router = APIRouter(prefix="/api/probes", tags=["probes"])
 
