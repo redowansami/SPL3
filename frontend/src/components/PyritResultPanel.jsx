@@ -1,9 +1,30 @@
+import { useState } from "react";
+
+import { fetchPyritMitigation } from "../api/client";
+import MitigationModal from "./MitigationModal";
+
 function truncate(text, max = 2000) {
   if (!text || text.length <= max) return text;
   return text.slice(0, max) + "…";
 }
 
 export default function PyritResultPanel({ isRunning, error, result, elapsed = 0 }) {
+  const [mitigation, setMitigation] = useState(null);
+
+  async function openMitigation(objectiveId, title) {
+    setMitigation({ title, loading: true, error: null, data: null });
+    try {
+      const data = await fetchPyritMitigation(objectiveId || "custom");
+      setMitigation({ title, loading: false, error: null, data });
+    } catch (err) {
+      setMitigation({ title, loading: false, error: err.message, data: null });
+    }
+  }
+
+  function closeMitigation() {
+    setMitigation(null);
+  }
+
   if (isRunning) {
     return (
       <section className="attack-path-panel results-empty">
@@ -83,6 +104,14 @@ export default function PyritResultPanel({ isRunning, error, result, elapsed = 0
             <p>{result.final_score_rationale}</p>
           </div>
         )}
+        {result.achieved && (
+          <button
+            className="mitigation-button"
+            onClick={() => openMitigation(result.objective_id, result.objective_id || "Custom objective")}
+          >
+            Mitigation
+          </button>
+        )}
       </div>
 
       {result.conversation.length === 0 ? (
@@ -103,6 +132,16 @@ export default function PyritResultPanel({ isRunning, error, result, elapsed = 0
             </div>
           ))}
         </div>
+      )}
+
+      {mitigation && (
+        <MitigationModal
+          title={mitigation.title}
+          loading={mitigation.loading}
+          error={mitigation.error}
+          data={mitigation.data}
+          onClose={closeMitigation}
+        />
       )}
     </section>
   );
