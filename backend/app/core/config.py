@@ -8,7 +8,7 @@ from dotenv import load_dotenv
 # like OPENROUTER_API_KEY into os.environ for both the API process (the PyRIT
 # router's pre-check) and the PyRIT subprocess, which inherits this environment.
 # Real env vars already set take precedence (override=False).
-load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 
 # Root temp directory where per-scan work dirs (generator config + garak report) are created.
 SCAN_WORK_DIR = Path(__file__).resolve().parent.parent / ".scan_runs"
