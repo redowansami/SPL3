@@ -4,10 +4,18 @@ import pytest
 from fastapi.testclient import TestClient
 
 from backend.app.core.config import PYRIT_API_KEY_ENV
+from app.core.security import get_current_user
 from app.main import app
 from app.services.pyrit import job_manager
 
 client = TestClient(app)
+
+
+class _FakeUser:
+    id = 1
+
+
+app.dependency_overrides[get_current_user] = lambda: _FakeUser()
 
 
 @pytest.fixture
@@ -20,9 +28,10 @@ def no_subprocess(monkeypatch):
     """Capture the job args instead of actually spawning the PyRIT subprocess."""
     captured = {}
 
-    def fake_start(req, objective_id, objective, success_criteria):
+    def fake_start(req, objective_id, objective, success_criteria, user_id=None):
         captured.update(
-            objective_id=objective_id, objective=objective, success_criteria=success_criteria
+            objective_id=objective_id, objective=objective, success_criteria=success_criteria,
+            user_id=user_id,
         )
         return "pyrit-test123"
 
