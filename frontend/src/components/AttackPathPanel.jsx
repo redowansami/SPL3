@@ -1,6 +1,7 @@
 import { Fragment, useState } from "react";
 
 import { fetchMitigation } from "../api/client";
+import ExportPdfButton from "./ExportPdfButton";
 import MitigationModal from "./MitigationModal";
 
 function truncate(text, max = 400) {
@@ -8,7 +9,7 @@ function truncate(text, max = 400) {
   return text.slice(0, max) + "…";
 }
 
-export default function AttackPathPanel({ isRunning, error, result, elapsed = 0 }) {
+export default function AttackPathPanel({ isRunning, error, result, elapsed = 0, meta = null }) {
   const [mitigation, setMitigation] = useState(null);
 
   async function openMitigation(probe) {
@@ -80,7 +81,10 @@ export default function AttackPathPanel({ isRunning, error, result, elapsed = 0 
   return (
     <section className="attack-path-panel">
       <div className="results-summary">
-        <h2>Results — {result.garak_probe}</h2>
+        <div className="results-summary-head">
+          <h2>Results — {result.garak_probe}</h2>
+          {meta && <ExportPdfButton engine="garak" result={result} meta={meta} />}
+        </div>
         <div className="results-stats">
           <div className="stat">
             <span className="stat-value">{result.attempts_evaluated}</span>
