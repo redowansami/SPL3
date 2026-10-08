@@ -14,7 +14,7 @@ hits, not an error.
 import json
 from pathlib import Path
 
-from backend.app.schemas.schemas import AttackPathStep
+from app.schemas.schemas import AttackPathStep
 
 
 def parse_hitlog(hitlog_path: Path) -> list[AttackPathStep]:

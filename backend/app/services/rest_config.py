@@ -12,13 +12,13 @@ override `request_template` / `response_field` on the `ScanRequest` to match its
 request body shape and response field name.
 """
 
-from backend.app.core.config import (
+from app.core.config import (
     DEFAULT_REQUEST_TEMPLATE,
     DEFAULT_REQUEST_TIMEOUT_SECONDS,
     DEFAULT_RESPONSE_FIELD,
     TIMEOUT_SKIP_STATUS_CODE,
 )
-from backend.app.schemas.schemas import ScanRequest
+from app.schemas.schemas import ScanRequest
 
 
 def build_rest_generator_config(scan_request: ScanRequest) -> dict:
