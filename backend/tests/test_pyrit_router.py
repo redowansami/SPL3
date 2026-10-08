@@ -3,7 +3,7 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from app.config import PYRIT_API_KEY_ENV
+from backend.app.core.config import PYRIT_API_KEY_ENV
 from app.main import app
 from app.services.pyrit import job_manager
 
