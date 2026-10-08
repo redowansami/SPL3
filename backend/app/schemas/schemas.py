@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 from typing import Any
 
@@ -109,6 +110,11 @@ class ScanStatusResponse(BaseModel):
     run_id: str
     status: JobStatus
     elapsed_seconds: float
+    # Populated only for persisted history detail lookups (not live polling), so
+    # the frontend can build an export report without a second request.
+    engine: str | None = None
+    started_at: datetime | None = None
+    ended_at: datetime | None = None
     # Populated only once status is terminal; mirrors ScanResponse's fields 1:1 so
     # the frontend's existing result.ok/result.failures/... access keeps working.
     ok: bool | None = None

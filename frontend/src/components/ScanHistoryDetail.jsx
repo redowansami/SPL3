@@ -27,6 +27,14 @@ export default function ScanHistoryDetail() {
   // tells us which live-result component to reuse.
   const isPyrit = detail != null && "conversation" in detail;
 
+  const meta = detail && {
+    targetUrl: detail.target_url,
+    engine: detail.engine ?? (isPyrit ? "pyrit" : "garak"),
+    runId: detail.run_id,
+    startedAt: detail.started_at,
+    endedAt: detail.ended_at,
+  };
+
   return (
     <section className="history-detail">
       <button type="button" className="history-back-button" onClick={() => navigate("/history")}>
@@ -38,9 +46,21 @@ export default function ScanHistoryDetail() {
           <p>Loading scan…</p>
         </section>
       ) : isPyrit ? (
-        <PyritResultPanel isRunning={false} error={error} result={detail} elapsed={detail?.elapsed_seconds ?? 0} />
+        <PyritResultPanel
+          isRunning={false}
+          error={error}
+          result={detail}
+          elapsed={detail?.elapsed_seconds ?? 0}
+          meta={meta}
+        />
       ) : (
-        <AttackPathPanel isRunning={false} error={error} result={detail} elapsed={detail?.elapsed_seconds ?? 0} />
+        <AttackPathPanel
+          isRunning={false}
+          error={error}
+          result={detail}
+          elapsed={detail?.elapsed_seconds ?? 0}
+          meta={meta}
+        />
       )}
     </section>
   );
