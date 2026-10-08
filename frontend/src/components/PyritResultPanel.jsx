@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 import { fetchPyritMitigation } from "../api/client";
-import ExportPdfButton from "./ExportPdfButton";
+import ExportMenuButton from "./ExportMenuButton";
 import MitigationModal from "./MitigationModal";
 
 function truncate(text, max = 2000) {
@@ -83,7 +83,7 @@ export default function PyritResultPanel({ isRunning, error, result, elapsed = 0
       <div className="pyrit-summary">
         <div className="results-summary-head">
           <h2>Result — Multi-turn attack</h2>
-          {meta && <ExportPdfButton engine="pyrit" result={result} meta={meta} />}
+          {meta && <ExportMenuButton engine="pyrit" result={result} meta={meta} />}
         </div>
         <p className="pyrit-objective">{result.objective}</p>
         <div className="results-stats">
