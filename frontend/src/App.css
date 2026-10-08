@@ -487,14 +487,15 @@ pre.attack-path-node-body {
   gap: 12px;
 }
 
-.export-pdf-wrap {
+.export-menu-wrap {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 4px;
 }
 
-.export-pdf-button {
+.export-menu-toggle {
   background: var(--accent);
   color: #fff;
   border: none;
@@ -503,15 +504,50 @@ pre.attack-path-node-body {
   font-size: 12px;
   font-weight: 600;
   white-space: nowrap;
+  cursor: pointer;
 }
 
-.export-pdf-button:hover:not(:disabled) {
+.export-menu-toggle:hover:not(:disabled) {
   background: var(--accent-hover);
 }
 
-.export-pdf-button:disabled {
+.export-menu-toggle:disabled {
   opacity: 0.6;
   cursor: default;
+}
+
+.export-menu-list {
+  position: absolute;
+  top: calc(100% + 4px);
+  right: 0;
+  z-index: 20;
+  min-width: 140px;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.export-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: none;
+  border: none;
+  border-radius: 4px;
+  padding: 6px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-h);
+  cursor: pointer;
+}
+
+.export-menu-item:hover {
+  background: var(--accent);
+  color: #fff;
 }
 
 .export-pdf-error {
