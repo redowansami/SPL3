@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 load_dotenv(Path(__file__).resolve().parent.parent.parent / ".env")
 
 # Root temp directory where per-scan work dirs (generator config + garak report) are created.
-SCAN_WORK_DIR = Path(__file__).resolve().parent.parent / ".scan_runs"
+SCAN_WORK_DIR = Path(__file__).resolve().parent.parent.parent / ".scan_runs"
 
 # Python interpreter used to invoke `garak` as `python -m garak`.
 # Using sys.executable (rather than relying on a `garak` script on PATH) keeps this
@@ -68,7 +68,7 @@ TIMEOUT_SKIP_STATUS_CODE = 598
 # (datasets>=5, newer fastapi/uvicorn) conflict with garak's, so it lives in a
 # dedicated venv (`.venv-pyrit`, see requirements-pyrit.txt). Override with the
 # PYRIT_PYTHON env var to point at a different interpreter.
-_PYRIT_VENV_PYTHON = Path(__file__).resolve().parent.parent / ".venv-pyrit" / "Scripts" / "python.exe"
+_PYRIT_VENV_PYTHON = Path(__file__).resolve().parent.parent.parent / ".venv-pyrit" / "Scripts" / "python.exe"
 PYRIT_PYTHON_EXECUTABLE = os.environ.get(
     "PYRIT_PYTHON", str(_PYRIT_VENV_PYTHON) if _PYRIT_VENV_PYTHON.exists() else sys.executable
 )
@@ -82,10 +82,10 @@ PYRIT_OPENAI_ENDPOINT = os.environ.get("PYRIT_OPENAI_ENDPOINT", "https://openrou
 PYRIT_API_KEY_ENV = os.environ.get("PYRIT_API_KEY_ENV", "OPENROUTER_API_KEY")
 
 # Model that plays the attacker, generating each turn of the conversation.
-PYRIT_ATTACKER_MODEL = os.environ.get("PYRIT_ATTACKER_MODEL", "qwen/qwen3.8-27b:free")
+PYRIT_ATTACKER_MODEL = os.environ.get("PYRIT_ATTACKER_MODEL", "liquid/lfm-2.5-2.6b:free")
 
 # Model that judges, after every turn, whether the objective was achieved.
-PYRIT_SCORER_MODEL = os.environ.get("PYRIT_SCORER_MODEL", "qwen/qwen3.8-27b:free")
+PYRIT_SCORER_MODEL = os.environ.get("PYRIT_SCORER_MODEL", "liquid/lfm-2.5-2.6b:free")
 
 # Turns used when a scan doesn't specify max_turns, and the most a scan may request.
 PYRIT_DEFAULT_MAX_TURNS = 5
