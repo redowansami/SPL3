@@ -1,4 +1,11 @@
+import { getToken } from "./authClient";
+
 const API_BASE = "http://localhost:8000";
+
+function authHeader() {
+  const token = getToken();
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
 
 export async function fetchProbes() {
   const res = await fetch(`${API_BASE}/api/probes`);
@@ -11,7 +18,7 @@ export async function fetchProbes() {
 export async function startScan({ targetUrl, probeId, engine, requestTemplate, responseField }) {
   const res = await fetch(`${API_BASE}/api/scan`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeader() },
     body: JSON.stringify({
       target_url: targetUrl,
       probe_id: probeId,
@@ -30,7 +37,7 @@ export async function startScan({ targetUrl, probeId, engine, requestTemplate, r
 }
 
 export async function getScanStatus(runId) {
-  const res = await fetch(`${API_BASE}/api/scan/${runId}`);
+  const res = await fetch(`${API_BASE}/api/scan/${runId}`, { headers: authHeader() });
   const data = await res.json().catch(() => null);
 
   if (!res.ok) {
@@ -40,7 +47,7 @@ export async function getScanStatus(runId) {
 }
 
 export async function cancelScan(runId) {
-  const res = await fetch(`${API_BASE}/api/scan/${runId}/cancel`, { method: "POST" });
+  const res = await fetch(`${API_BASE}/api/scan/${runId}/cancel`, { method: "POST", headers: authHeader() });
   const data = await res.json().catch(() => null);
 
   if (!res.ok) {
@@ -72,7 +79,7 @@ export async function fetchObjectives() {
 export async function startPyritScan({ targetUrl, objectiveId, maxTurns, requestTemplate, responseField }) {
   const res = await fetch(`${API_BASE}/api/pyrit/scan`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...authHeader() },
     body: JSON.stringify({
       target_url: targetUrl,
       objective_id: objectiveId,
@@ -91,7 +98,7 @@ export async function startPyritScan({ targetUrl, objectiveId, maxTurns, request
 }
 
 export async function getPyritScanStatus(runId) {
-  const res = await fetch(`${API_BASE}/api/pyrit/scan/${runId}`);
+  const res = await fetch(`${API_BASE}/api/pyrit/scan/${runId}`, { headers: authHeader() });
   const data = await res.json().catch(() => null);
 
   if (!res.ok) {
@@ -101,7 +108,7 @@ export async function getPyritScanStatus(runId) {
 }
 
 export async function cancelPyritScan(runId) {
-  const res = await fetch(`${API_BASE}/api/pyrit/scan/${runId}/cancel`, { method: "POST" });
+  const res = await fetch(`${API_BASE}/api/pyrit/scan/${runId}/cancel`, { method: "POST", headers: authHeader() });
   const data = await res.json().catch(() => null);
 
   if (!res.ok) {
@@ -116,6 +123,33 @@ export async function fetchPyritMitigation(objectiveId) {
 
   if (!res.ok) {
     throw new Error(data?.detail || `Failed to load mitigation (${res.status})`);
+  }
+  return data;
+}
+
+// ---- Scan history (past, persisted runs) ----
+
+export async function fetchScanHistory({ engine, limit, offset } = {}) {
+  const params = new URLSearchParams();
+  if (engine) params.set("engine", engine);
+  if (limit != null) params.set("limit", limit);
+  if (offset != null) params.set("offset", offset);
+  const qs = params.toString();
+  const res = await fetch(`${API_BASE}/api/scans${qs ? `?${qs}` : ""}`, { headers: authHeader() });
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new Error(data?.detail || `Failed to load scan history (${res.status})`);
+  }
+  return data;
+}
+
+export async function fetchScanRunDetail(runId) {
+  const res = await fetch(`${API_BASE}/api/scans/${encodeURIComponent(runId)}/detail`, { headers: authHeader() });
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new Error(data?.detail || `Failed to load scan detail (${res.status})`);
   }
   return data;
 }

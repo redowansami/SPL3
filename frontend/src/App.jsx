@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import { Route, Routes } from "react-router-dom";
 import "./App.css";
 import {
   fetchProbes,
@@ -14,6 +15,8 @@ import TopBar from "./components/TopBar";
 import ProbeSidebar from "./components/ProbeSidebar";
 import AttackPathPanel from "./components/AttackPathPanel";
 import PyritResultPanel from "./components/PyritResultPanel";
+import ScanHistoryPanel from "./components/ScanHistoryPanel";
+import ScanHistoryDetail from "./components/ScanHistoryDetail";
 
 const POLL_INTERVAL_MS = 1200;
 const POLL_RETRY_DELAY_MS = 1500;
@@ -162,37 +165,48 @@ function App() {
       />
 
       <main className="content-grid">
-        {engine === "garak" ? (
-          <ProbeSidebar
-            heading="Probes"
-            items={probes}
-            selectedId={selectedProbeId}
-            onSelect={setSelectedProbeId}
-            onRun={handleRun}
-            onStop={handleStop}
-            canRun={canRun}
-            isRunning={isRunning}
-          />
-        ) : (
-          <ProbeSidebar
-            heading="Objectives"
-            items={objectives}
-            selectedId={selectedObjectiveId}
-            onSelect={setSelectedObjectiveId}
-            onRun={handleRun}
-            onStop={handleStop}
-            canRun={canRun}
-            isRunning={isRunning}
-          />
-        )}
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <>
+                {engine === "garak" ? (
+                  <ProbeSidebar
+                    heading="Probes"
+                    items={probes}
+                    selectedId={selectedProbeId}
+                    onSelect={setSelectedProbeId}
+                    onRun={handleRun}
+                    onStop={handleStop}
+                    canRun={canRun}
+                    isRunning={isRunning}
+                  />
+                ) : (
+                  <ProbeSidebar
+                    heading="Objectives"
+                    items={objectives}
+                    selectedId={selectedObjectiveId}
+                    onSelect={setSelectedObjectiveId}
+                    onRun={handleRun}
+                    onStop={handleStop}
+                    canRun={canRun}
+                    isRunning={isRunning}
+                  />
+                )}
 
-        {/* While a run is active or showing a result, follow the engine that ran;
-            otherwise follow the current toggle so the empty state matches. */}
-        {(isRunning || result ? runEngine.current : engine) === "garak" ? (
-          <AttackPathPanel isRunning={isRunning} error={error} result={result} elapsed={elapsed} />
-        ) : (
-          <PyritResultPanel isRunning={isRunning} error={error} result={result} elapsed={elapsed} />
-        )}
+                {/* While a run is active or showing a result, follow the engine that ran;
+                    otherwise follow the current toggle so the empty state matches. */}
+                {(isRunning || result ? runEngine.current : engine) === "garak" ? (
+                  <AttackPathPanel isRunning={isRunning} error={error} result={result} elapsed={elapsed} />
+                ) : (
+                  <PyritResultPanel isRunning={isRunning} error={error} result={result} elapsed={elapsed} />
+                )}
+              </>
+            }
+          />
+          <Route path="/history" element={<ScanHistoryPanel />} />
+          <Route path="/history/:runId" element={<ScanHistoryDetail />} />
+        </Routes>
       </main>
     </div>
   );
