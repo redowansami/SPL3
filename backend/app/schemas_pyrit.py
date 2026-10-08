@@ -10,7 +10,7 @@ from typing import Any, Literal
 from pydantic import BaseModel, Field, model_validator
 
 from app.config import PYRIT_MAX_TURNS_LIMIT
-from app.schemas import JobStatus
+from app.schemas import AtlasMitigationOut, AtlasTechniqueOut, JobStatus
 
 
 class PyritObjectiveInfo(BaseModel):
@@ -19,6 +19,13 @@ class PyritObjectiveInfo(BaseModel):
     description: str
     objective: str
     success_criteria: str
+
+
+class PyritMitigationOut(BaseModel):
+    objective_id: str
+    atlas_techniques: list[AtlasTechniqueOut]
+    atlas_mitigations: list[AtlasMitigationOut]
+    strategies: list[str]
 
 
 class PyritScanRequest(BaseModel):

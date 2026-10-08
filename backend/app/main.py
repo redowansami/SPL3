@@ -2,9 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.config import SCAN_WORK_DIR
-from app.routers import mitigations, probes, pyrit, scan
+from app.database import init_db
+from app.routers import auth, mitigations, probes, pyrit, scan
 
 SCAN_WORK_DIR.mkdir(parents=True, exist_ok=True)
+init_db()
 
 app = FastAPI(title="ATLAS-Scan API")
 
@@ -19,6 +21,7 @@ app.include_router(probes.router)
 app.include_router(scan.router)
 app.include_router(mitigations.router)
 app.include_router(pyrit.router)
+app.include_router(auth.router)
 
 
 @app.get("/api/health")

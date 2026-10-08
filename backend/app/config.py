@@ -101,3 +101,24 @@ PYRIT_DEFAULT_REQUEST_TIMEOUT_SECONDS = int(os.environ.get("PYRIT_REQUEST_TIMEOU
 
 # Hard ceiling on how long a single PyRIT subprocess run may take.
 PYRIT_SCAN_TIMEOUT_SECONDS = 900
+
+# --- Auth (registration / login / email OTP) ------------------------------------
+
+# Postgres connection string, e.g. postgresql+psycopg2://user:pass@localhost:5432/dbname
+DATABASE_URL = os.environ.get("DATABASE_URL", "")
+
+# JWT signing. JWT_SECRET_KEY must be overridden via .env in any real deployment.
+JWT_SECRET_KEY = os.environ.get("JWT_SECRET_KEY", "dev-insecure-secret-change-me")
+JWT_ALGORITHM = os.environ.get("JWT_ALGORITHM", "HS256")
+JWT_EXPIRE_MINUTES = int(os.environ.get("JWT_EXPIRE_MINUTES", "1440"))
+
+# Gmail SMTP (or any SMTP server) used to send the registration OTP email.
+MAIL_USERNAME = os.environ.get("MAIL_USERNAME", "")
+MAIL_PASSWORD = os.environ.get("MAIL_PASSWORD", "")
+MAIL_FROM = os.environ.get("MAIL_FROM", MAIL_USERNAME)
+MAIL_FROM_NAME = os.environ.get("MAIL_FROM_NAME", "ATLAS-Scan")
+MAIL_SERVER = os.environ.get("MAIL_SERVER", "smtp.gmail.com")
+MAIL_PORT = int(os.environ.get("MAIL_PORT", "587"))
+
+# How long a registration OTP code remains valid.
+OTP_EXPIRE_MINUTES = int(os.environ.get("OTP_EXPIRE_MINUTES", "10"))
