@@ -5,8 +5,10 @@ import os
 from fastapi import APIRouter, HTTPException, status
 
 from app.config import PYRIT_API_KEY_ENV
+from app.pyrit_mitigations import get_objective_mitigation
 from app.pyrit_objectives import PYRIT_OBJECTIVES, PYRIT_OBJECTIVES_BY_ID
 from app.schemas_pyrit import (
+    PyritMitigationOut,
     PyritObjectiveInfo,
     PyritScanRequest,
     PyritScanStartResponse,
@@ -20,6 +22,12 @@ router = APIRouter(prefix="/api/pyrit", tags=["pyrit"])
 @router.get("/objectives", response_model=list[PyritObjectiveInfo])
 def list_objectives() -> list[PyritObjectiveInfo]:
     return PYRIT_OBJECTIVES
+
+
+@router.get("/mitigations/{objective_id}", response_model=PyritMitigationOut)
+def get_pyrit_mitigation(objective_id: str) -> PyritMitigationOut:
+    # Never 404s: unknown / custom objective ids get the generic fallback mapping.
+    return get_objective_mitigation(objective_id)
 
 
 @router.post("/scan", response_model=PyritScanStartResponse, status_code=status.HTTP_202_ACCEPTED)
