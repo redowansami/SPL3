@@ -30,6 +30,7 @@ def build_rest_generator_config(scan_request: ScanRequest) -> dict:
                 "method": "post",
                 "headers": {
                     "Content-Type": "application/json",
+                    **(scan_request.auth_headers or {}),
                 },
                 "req_template_json_object": scan_request.request_template or DEFAULT_REQUEST_TEMPLATE,
                 "response_json": True,
