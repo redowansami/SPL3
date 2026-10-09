@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { evaluateCustomAttack, sendCustomChat } from "../api/client";
 import EvaluateAttackModal from "./EvaluateAttackModal";
 
-export default function CustomAttackPage({ targetUrl }) {
+export default function CustomAttackPage({ targetUrl, authHeadersText }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [sending, setSending] = useState(false);
@@ -31,6 +31,16 @@ export default function CustomAttackPage({ targetUrl }) {
       return;
     }
 
+    let authHeaders = null;
+    if (authHeadersText?.trim()) {
+      try {
+        authHeaders = JSON.parse(authHeadersText);
+      } catch {
+        setError("Auth headers must be valid JSON.");
+        return;
+      }
+    }
+
     setError(null);
     setSending(true);
     setMessages((prev) => [...prev, { role: "attacker", text: message }]);
@@ -38,7 +48,7 @@ export default function CustomAttackPage({ targetUrl }) {
     resetInputHeight();
 
     try {
-      const { reply } = await sendCustomChat({ targetUrl, message });
+      const { reply } = await sendCustomChat({ targetUrl, message, authHeaders });
       setMessages((prev) => [...prev, { role: "target", text: reply }]);
       bottomRef.current?.scrollIntoView({ behavior: "smooth" });
     } catch (err) {

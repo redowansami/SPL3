@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 export default function TopBar({
@@ -9,9 +10,12 @@ export default function TopBar({
   onRequestTemplateChange,
   responseField,
   onResponseFieldChange,
+  authHeadersText,
+  onAuthHeadersChange,
   maxTurns,
   onMaxTurnsChange,
 }) {
+  const [showAuthHeaders, setShowAuthHeaders] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const isHistory = location.pathname.startsWith("/history");
@@ -71,7 +75,12 @@ export default function TopBar({
           />
         </div>
       )}
-      <details className="advanced-config">
+      <details
+        className="advanced-config"
+        onToggle={(e) => {
+          if (e.target.open) setShowAuthHeaders(false);
+        }}
+      >
         <summary>Advanced target config</summary>
         <div className="top-bar-row">
           <label className="top-bar-label" htmlFor="request-template">
@@ -98,6 +107,29 @@ export default function TopBar({
             value={responseField}
             onChange={(e) => onResponseFieldChange(e.target.value)}
           />
+        </div>
+        <div className="top-bar-row">
+          <label className="top-bar-label" htmlFor="auth-headers">
+            Auth headers (JSON)
+          </label>
+          <input
+            id="auth-headers"
+            className="response-field-input"
+            type={showAuthHeaders ? "text" : "password"}
+            placeholder='{"Authorization": "Bearer <token>"}'
+            autoComplete="off"
+            value={authHeadersText}
+            onChange={(e) => onAuthHeadersChange(e.target.value)}
+          />
+          <button
+            type="button"
+            className="auth-visibility-toggle"
+            onClick={() => setShowAuthHeaders((prev) => !prev)}
+            aria-label={showAuthHeaders ? "Hide auth headers" : "Show auth headers"}
+            title={showAuthHeaders ? "Hide auth headers" : "Show auth headers"}
+          >
+            {showAuthHeaders ? "Hide" : "Show"}
+          </button>
         </div>
       </details>
     </header>
