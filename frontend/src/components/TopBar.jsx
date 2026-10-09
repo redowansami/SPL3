@@ -15,11 +15,15 @@ export default function TopBar({
   const location = useLocation();
   const navigate = useNavigate();
   const isHistory = location.pathname.startsWith("/history");
+  const isCustom = location.pathname.startsWith("/custom");
 
   return (
     <header className="top-bar">
       <button type="button" className="history-button" onClick={() => navigate(isHistory ? "/" : "/history")}>
         {isHistory ? "Back to Scan" : "History"}
+      </button>
+      <button type="button" className="history-button" onClick={() => navigate(isCustom ? "/" : "/custom")}>
+        {isCustom ? "Back to Scan" : "Custom Attack"}
       </button>
       <div className="top-bar-row">
         <label className="top-bar-label" htmlFor="target-url">
