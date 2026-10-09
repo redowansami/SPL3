@@ -102,6 +102,10 @@ PYRIT_DEFAULT_REQUEST_TIMEOUT_SECONDS = int(os.environ.get("PYRIT_REQUEST_TIMEOU
 # Hard ceiling on how long a single PyRIT subprocess run may take.
 PYRIT_SCAN_TIMEOUT_SECONDS = 900
 
+# Hard ceiling on how long the manual "Custom Attack" evaluate subprocess (a single
+# scorer LLM call, not a full attack) may take.
+PYRIT_EVALUATE_TIMEOUT_SECONDS = 180
+
 # --- Auth (registration / login / email OTP) ------------------------------------
 
 # Postgres connection string, e.g. postgresql+psycopg2://user:pass@localhost:5432/dbname

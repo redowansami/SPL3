@@ -20,9 +20,11 @@ from app.core.config import (
     PYRIT_SCORER_MODEL,
     SCAN_WORK_DIR,
 )
+from app.schemas.schemas_custom import CustomEvaluateRequest
 from app.schemas.schemas_pyrit import PyritScanRequest
 
 _LAUNCHER = Path(__file__).parent / "runtime" / "launcher.py"
+_EVALUATE_LAUNCHER = Path(__file__).parent / "runtime" / "evaluate_launcher.py"
 
 
 def prepare_run_dir(
@@ -61,6 +63,37 @@ def build_command(run_config_path: Path, result_path: Path) -> list[str]:
     return [
         PYRIT_PYTHON_EXECUTABLE,
         str(_LAUNCHER),
+        str(run_config_path),
+        str(result_path),
+    ]
+
+
+def prepare_evaluate_run_dir(req: CustomEvaluateRequest, success_criteria: str) -> tuple[str, Path, Path, Path]:
+    """Creates the run dir and writes run_config.json for a manual-evaluate scoring
+    run. Returns (run_id, run_dir, run_config_path, result_path)."""
+    run_id = "custom-" + uuid.uuid4().hex[:12]
+    run_dir = SCAN_WORK_DIR / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+
+    run_config = {
+        "objective": req.objective,
+        "success_criteria": success_criteria,
+        "conversation": [turn.model_dump() for turn in req.conversation],
+        "openai_endpoint": PYRIT_OPENAI_ENDPOINT,
+        "api_key_env": PYRIT_API_KEY_ENV,
+        "scorer_model": PYRIT_SCORER_MODEL,
+    }
+    run_config_path = run_dir / "run_config.json"
+    run_config_path.write_text(json.dumps(run_config), encoding="utf-8")
+
+    result_path = run_dir / "result.json"
+    return run_id, run_dir, run_config_path, result_path
+
+
+def build_evaluate_command(run_config_path: Path, result_path: Path) -> list[str]:
+    return [
+        PYRIT_PYTHON_EXECUTABLE,
+        str(_EVALUATE_LAUNCHER),
         str(run_config_path),
         str(result_path),
     ]
