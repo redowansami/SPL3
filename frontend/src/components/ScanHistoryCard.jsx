@@ -11,7 +11,9 @@ export default function ScanHistoryCard({ run, onSelect }) {
         {run.target_url}
       </div>
       <div className="history-card-meta">
-        <span className="history-card-engine">{isGarak ? "Garak" : "PyRIT"}</span>
+        <span className="history-card-engine">
+          {isGarak ? "Garak" : run.engine === "custom" ? "Custom" : "PyRIT"}
+        </span>
         <span className="history-card-status">{run.status}</span>
         <span className="history-card-time">{new Date(run.started_at).toLocaleString()}</span>
       </div>
