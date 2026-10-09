@@ -28,6 +28,7 @@ function App() {
   const [engine, setEngine] = useState("garak");
   const [requestTemplateText, setRequestTemplateText] = useState("");
   const [responseField, setResponseField] = useState("");
+  const [authHeadersText, setAuthHeadersText] = useState("");
   const [maxTurns, setMaxTurns] = useState("5");
   const [probes, setProbes] = useState([]);
   const [selectedProbeId, setSelectedProbeId] = useState(null);
@@ -111,6 +112,16 @@ function App() {
       }
     }
 
+    let authHeaders = null;
+    if (authHeadersText.trim()) {
+      try {
+        authHeaders = JSON.parse(authHeadersText);
+      } catch {
+        setError("Auth headers must be valid JSON.");
+        return;
+      }
+    }
+
     runEngine.current = engine;
     setIsRunning(true);
     setElapsed(0);
@@ -122,6 +133,7 @@ function App() {
           engine,
           requestTemplate,
           responseField,
+          authHeaders,
         });
         setRunId(run_id);
         poll(run_id, getScanStatus);
@@ -132,6 +144,7 @@ function App() {
           maxTurns: maxTurns.trim() ? Number(maxTurns) : null,
           requestTemplate,
           responseField,
+          authHeaders,
         });
         setRunId(run_id);
         poll(run_id, getPyritScanStatus);
@@ -167,6 +180,8 @@ function App() {
         onRequestTemplateChange={setRequestTemplateText}
         responseField={responseField}
         onResponseFieldChange={setResponseField}
+        authHeadersText={authHeadersText}
+        onAuthHeadersChange={setAuthHeadersText}
         maxTurns={maxTurns}
         onMaxTurnsChange={setMaxTurns}
       />
@@ -241,7 +256,10 @@ function App() {
           />
           <Route path="/history" element={<ScanHistoryPanel />} />
           <Route path="/history/:runId" element={<ScanHistoryDetail />} />
-          <Route path="/custom" element={<CustomAttackPage targetUrl={targetUrl} />} />
+          <Route
+            path="/custom"
+            element={<CustomAttackPage targetUrl={targetUrl} authHeadersText={authHeadersText} />}
+          />
         </Routes>
       </main>
     </div>

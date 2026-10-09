@@ -52,6 +52,11 @@ class ScanRequest(BaseModel):
         description="JSON field in the target's response containing the model's reply. "
         "Defaults to 'response'.",
     )
+    auth_headers: dict[str, str] | None = Field(
+        default=None,
+        description="Extra HTTP headers to send with every request to the target "
+        "(e.g. Authorization, Cookie, X-API-Key) for targets that require authentication.",
+    )
     request_timeout: int | None = Field(
         default=None,
         description="Per-request HTTP timeout in seconds when calling the target endpoint. "

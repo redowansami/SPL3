@@ -15,7 +15,7 @@ export async function fetchProbes() {
   return res.json();
 }
 
-export async function startScan({ targetUrl, probeId, engine, requestTemplate, responseField }) {
+export async function startScan({ targetUrl, probeId, engine, requestTemplate, responseField, authHeaders }) {
   const res = await fetch(`${API_BASE}/api/scan`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeader() },
@@ -25,6 +25,7 @@ export async function startScan({ targetUrl, probeId, engine, requestTemplate, r
       engine,
       request_template: requestTemplate ?? null,
       response_field: responseField?.trim() ? responseField.trim() : null,
+      auth_headers: authHeaders ?? null,
     }),
   });
 
@@ -76,7 +77,14 @@ export async function fetchObjectives() {
   return res.json();
 }
 
-export async function startPyritScan({ targetUrl, objectiveId, maxTurns, requestTemplate, responseField }) {
+export async function startPyritScan({
+  targetUrl,
+  objectiveId,
+  maxTurns,
+  requestTemplate,
+  responseField,
+  authHeaders,
+}) {
   const res = await fetch(`${API_BASE}/api/pyrit/scan`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeader() },
@@ -86,6 +94,7 @@ export async function startPyritScan({ targetUrl, objectiveId, maxTurns, request
       max_turns: maxTurns ?? null,
       request_template: requestTemplate ?? null,
       response_field: responseField?.trim() ? responseField.trim() : null,
+      auth_headers: authHeaders ?? null,
     }),
   });
 
@@ -146,7 +155,7 @@ export async function fetchScanHistory({ engine, limit, offset } = {}) {
 
 // ---- Custom Attack (manual chat + objective-based evaluation) ----
 
-export async function sendCustomChat({ targetUrl, message, requestTemplate, responseField }) {
+export async function sendCustomChat({ targetUrl, message, requestTemplate, responseField, authHeaders }) {
   const res = await fetch(`${API_BASE}/api/custom/chat`, {
     method: "POST",
     headers: { "Content-Type": "application/json", ...authHeader() },
@@ -155,6 +164,7 @@ export async function sendCustomChat({ targetUrl, message, requestTemplate, resp
       message,
       request_template: requestTemplate ?? null,
       response_field: responseField?.trim() ? responseField.trim() : null,
+      auth_headers: authHeaders ?? null,
     }),
   });
 

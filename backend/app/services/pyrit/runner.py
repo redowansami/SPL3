@@ -43,6 +43,7 @@ def prepare_run_dir(
         "target_url": req.target_url,
         "request_template": req.request_template or DEFAULT_REQUEST_TEMPLATE,
         "response_field": req.response_field or DEFAULT_RESPONSE_FIELD,
+        "auth_headers": req.auth_headers or {},
         "request_timeout": req.request_timeout or PYRIT_DEFAULT_REQUEST_TIMEOUT_SECONDS,
         "objective": objective,
         "success_criteria": success_criteria,

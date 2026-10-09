@@ -52,7 +52,9 @@ async def custom_chat(
     try:
         async with httpx.AsyncClient(timeout=timeout) as client:
             http_response = await client.post(
-                req.target_url, json=body, headers={"Content-Type": "application/json"}
+                req.target_url,
+                json=body,
+                headers={"Content-Type": "application/json", **(req.auth_headers or {})},
             )
             http_response.raise_for_status()
             reply = extract_response(http_response.json(), response_field)

@@ -105,6 +105,17 @@
   font-size: 14px;
 }
 
+.auth-visibility-toggle {
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--panel-bg);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
 .pyrit-banner {
   padding: 8px 24px;
   background: var(--code-bg);
