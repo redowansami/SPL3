@@ -17,6 +17,7 @@ import AttackPathPanel from "./components/AttackPathPanel";
 import PyritResultPanel from "./components/PyritResultPanel";
 import ScanHistoryPanel from "./components/ScanHistoryPanel";
 import ScanHistoryDetail from "./components/ScanHistoryDetail";
+import CustomAttackPage from "./components/CustomAttackPage";
 
 const POLL_INTERVAL_MS = 1200;
 const POLL_RETRY_DELAY_MS = 1500;
@@ -240,6 +241,7 @@ function App() {
           />
           <Route path="/history" element={<ScanHistoryPanel />} />
           <Route path="/history/:runId" element={<ScanHistoryDetail />} />
+          <Route path="/custom" element={<CustomAttackPage targetUrl={targetUrl} />} />
         </Routes>
       </main>
     </div>
