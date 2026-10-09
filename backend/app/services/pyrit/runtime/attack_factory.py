@@ -27,6 +27,7 @@ def build_attack(cfg: dict) -> tuple[RedTeamingAttack, str]:
         request_template=cfg["request_template"],
         response_field=cfg["response_field"],
         request_timeout=cfg["request_timeout"],
+        auth_headers=cfg.get("auth_headers"),
     )
 
     adversarial_target = openai_chat_target(cfg, cfg["attacker_model"])

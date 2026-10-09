@@ -31,6 +31,7 @@ class JsonRestTarget(PromptTarget):
         request_template: dict,
         response_field: str,
         request_timeout: float,
+        auth_headers: dict[str, str] | None = None,
     ) -> None:
         super().__init__(
             endpoint=target_url,
@@ -41,6 +42,7 @@ class JsonRestTarget(PromptTarget):
         self._request_template = request_template
         self._response_field = response_field
         self._request_timeout = request_timeout
+        self._auth_headers = auth_headers
 
     def _build_identifier(self):
         return self._create_identifier(params={"uri": self._target_url})
@@ -54,7 +56,7 @@ class JsonRestTarget(PromptTarget):
             http_response = await client.post(
                 self._target_url,
                 json=body,
-                headers={"Content-Type": "application/json"},
+                headers={"Content-Type": "application/json", **(self._auth_headers or {})},
             )
             http_response.raise_for_status()
             reply_text = extract_response(http_response.json(), self._response_field)
