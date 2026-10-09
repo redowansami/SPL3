@@ -81,7 +81,7 @@ export default function ExportMenuButton({ engine, result, meta }) {
 }
 
 async function collectMitigations(engine, result) {
-  if (engine === "pyrit") {
+  if (engine === "pyrit" || engine === "custom") {
     if (!result.achieved) return [];
     const objectiveId = result.objective_id || "custom";
     const data = await fetchPyritMitigation(objectiveId);

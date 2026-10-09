@@ -9,30 +9,15 @@ Attacker and scorer share one OpenAI-compatible endpoint (e.g. OpenRouter). The
 API key is read from the environment inside this subprocess, never from the config.
 """
 
-import os
-
 from pyrit.executor.attack import (
     AttackAdversarialConfig,
     AttackScoringConfig,
     RedTeamingAttack,
 )
-from pyrit.prompt_target import OpenAIChatTarget
 from pyrit.score import SelfAskTrueFalseScorer, TrueFalseQuestion
 
+from app.services.pyrit.runtime.llm_targets import openai_chat_target
 from app.services.pyrit.runtime.rest_target import JsonRestTarget
-
-
-def _openai_chat_target(cfg: dict, model: str) -> OpenAIChatTarget:
-    api_key = os.environ.get(cfg["api_key_env"])
-    if not api_key:
-        raise RuntimeError(
-            f"Environment variable {cfg['api_key_env']} is not set; cannot reach the attacker/scorer LLM."
-        )
-    return OpenAIChatTarget(
-        endpoint=cfg["openai_endpoint"],
-        api_key=api_key,
-        model_name=model,
-    )
 
 
 def build_attack(cfg: dict) -> tuple[RedTeamingAttack, str]:
@@ -44,8 +29,8 @@ def build_attack(cfg: dict) -> tuple[RedTeamingAttack, str]:
         request_timeout=cfg["request_timeout"],
     )
 
-    adversarial_target = _openai_chat_target(cfg, cfg["attacker_model"])
-    scoring_target = _openai_chat_target(cfg, cfg["scorer_model"])
+    adversarial_target = openai_chat_target(cfg, cfg["attacker_model"])
+    scoring_target = openai_chat_target(cfg, cfg["scorer_model"])
 
     objective_scorer = SelfAskTrueFalseScorer.from_question(
         chat_target=scoring_target,

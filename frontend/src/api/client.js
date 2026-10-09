@@ -144,6 +144,47 @@ export async function fetchScanHistory({ engine, limit, offset } = {}) {
   return data;
 }
 
+// ---- Custom Attack (manual chat + objective-based evaluation) ----
+
+export async function sendCustomChat({ targetUrl, message, requestTemplate, responseField }) {
+  const res = await fetch(`${API_BASE}/api/custom/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeader() },
+    body: JSON.stringify({
+      target_url: targetUrl,
+      message,
+      request_template: requestTemplate ?? null,
+      response_field: responseField?.trim() ? responseField.trim() : null,
+    }),
+  });
+
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new Error(data?.detail || `Chat request failed (${res.status})`);
+  }
+  return data;
+}
+
+export async function evaluateCustomAttack({ targetUrl, objective, conversation }) {
+  const res = await fetch(`${API_BASE}/api/custom/evaluate`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authHeader() },
+    body: JSON.stringify({
+      target_url: targetUrl ?? null,
+      objective,
+      conversation,
+    }),
+  });
+
+  const data = await res.json().catch(() => null);
+
+  if (!res.ok) {
+    throw new Error(data?.detail || `Evaluate request failed (${res.status})`);
+  }
+  return data;
+}
+
 export async function fetchScanRunDetail(runId) {
   const res = await fetch(`${API_BASE}/api/scans/${encodeURIComponent(runId)}/detail`, { headers: authHeader() });
   const data = await res.json().catch(() => null);

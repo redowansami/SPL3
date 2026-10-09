@@ -25,6 +25,7 @@ from app.db.models import (
     ScanRun,
 )
 from app.schemas.schemas import JobStatus, ScanResponse
+from app.schemas.schemas_custom import CustomEvaluateRequest, CustomEvaluateResponse
 from app.schemas.schemas_pyrit import PyritScanResponse
 
 logger = logging.getLogger(__name__)
@@ -178,6 +179,64 @@ def save_pyrit_scan(
     except Exception:
         db.rollback()
         logger.exception("Failed to persist pyrit scan run %s to the database.", run_id)
+        return False
+    finally:
+        db.close()
+
+
+def save_custom_attack(
+    *,
+    run_id: str,
+    target_url: str,
+    req: CustomEvaluateRequest,
+    artifact_dir: str,
+    started_at: datetime,
+    ended_at: datetime,
+    result: CustomEvaluateResponse,
+    user_id: int,
+) -> bool:
+    """Persists one manual "Custom Attack" evaluate run plus its conversation
+    turns, as `engine="custom"` on the shared ScanRun table. Returns True on
+    success, False if persistence failed (including on a duplicate run_id)."""
+
+    conversation_turns = []
+    turn_number = 0
+    for turn in req.conversation:
+        if turn.role == "attacker":
+            turn_number += 1
+        conversation_turns.append(ScanConversationTurn(turn=turn_number, role=turn.role, text=turn.text))
+
+    db = SessionLocal()
+    try:
+        run = ScanRun(
+            run_id=run_id,
+            user_id=user_id,
+            engine="custom",
+            status=JobStatus.COMPLETED.value if result.ok else JobStatus.FAILED.value,
+            target_url=target_url,
+            objective=req.objective,
+            objective_id=result.objective_id,
+            ok=result.ok,
+            error=result.error,
+            achieved=result.achieved,
+            executed_turns=turn_number,
+            final_score_rationale=result.rationale,
+            artifact_dir=artifact_dir,
+            started_at=started_at,
+            ended_at=ended_at,
+        )
+        run.conversation_turns = conversation_turns
+
+        db.add(run)
+        db.commit()
+        return True
+    except IntegrityError:
+        db.rollback()
+        logger.warning("Custom attack run %s already persisted (duplicate run_id); skipping.", run_id)
+        return False
+    except Exception:
+        db.rollback()
+        logger.exception("Failed to persist custom attack run %s to the database.", run_id)
         return False
     finally:
         db.close()
