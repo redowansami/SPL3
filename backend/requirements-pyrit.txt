@@ -1,4 +1,0 @@
-# Installed into the separate `.venv-pyrit` interpreter that runs PyRIT attacks
-# (app/services/pyrit/runtime/launcher.py). Kept apart from requirements.txt because
-# PyRIT's pins (datasets>=5, newer fastapi/uvicorn) conflict with garak's.
-pyrit==1.1.0
