@@ -73,7 +73,9 @@ PYRIT_PYTHON_EXECUTABLE = os.environ.get(
     "PYRIT_PYTHON", str(_PYRIT_VENV_PYTHON) if _PYRIT_VENV_PYTHON.exists() else sys.executable
 )
 
-# OpenAI-compatible endpoint hosting the attacker (red-team) and scorer LLMs.
+# OpenAI-compatible endpoint hosting the fallback attacker (red-team) and scorer
+# LLMs (OpenRouter by default). Used only when every call to the primary (OpenAI)
+# provider below fails — see runtime/llm_targets.py::chat_target_with_fallback().
 PYRIT_OPENAI_ENDPOINT = os.environ.get("PYRIT_OPENAI_ENDPOINT", "https://openrouter.ai/api/v1")
 
 # Name of the env var holding the API key for PYRIT_OPENAI_ENDPOINT. Only the name
@@ -81,11 +83,20 @@ PYRIT_OPENAI_ENDPOINT = os.environ.get("PYRIT_OPENAI_ENDPOINT", "https://openrou
 # environment and never written to disk.
 PYRIT_API_KEY_ENV = os.environ.get("PYRIT_API_KEY_ENV", "OPENROUTER_API_KEY")
 
-# Model that plays the attacker, generating each turn of the conversation.
+# Fallback model that plays the attacker, generating each turn of the conversation.
 PYRIT_ATTACKER_MODEL = os.environ.get("PYRIT_ATTACKER_MODEL", "liquid/lfm-2.5-2.6b:free")
 
-# Model that judges, after every turn, whether the objective was achieved.
+# Fallback model that judges, after every turn, whether the objective was achieved.
 PYRIT_SCORER_MODEL = os.environ.get("PYRIT_SCORER_MODEL", "liquid/lfm-2.5-2.6b:free")
+
+# Primary provider: OpenAI directly. Tried first; PYRIT_OPENAI_ENDPOINT/PYRIT_API_KEY_ENV/
+# PYRIT_ATTACKER_MODEL/PYRIT_SCORER_MODEL above are the fallback (OpenRouter), used
+# only when every call to the primary fails (missing/invalid key, rate limit,
+# network error).
+PYRIT_PRIMARY_ENDPOINT = os.environ.get("PYRIT_PRIMARY_ENDPOINT", "https://api.openai.com/v1")
+PYRIT_PRIMARY_API_KEY_ENV = os.environ.get("PYRIT_PRIMARY_API_KEY_ENV", "OPENAI_API_KEY")
+PYRIT_PRIMARY_ATTACKER_MODEL = os.environ.get("PYRIT_PRIMARY_ATTACKER_MODEL", "gpt-4o-mini")
+PYRIT_PRIMARY_SCORER_MODEL = os.environ.get("PYRIT_PRIMARY_SCORER_MODEL", "gpt-4o-mini")
 
 # Turns used when a scan doesn't specify max_turns, and the most a scan may request.
 PYRIT_DEFAULT_MAX_TURNS = 5
@@ -105,6 +116,16 @@ PYRIT_SCAN_TIMEOUT_SECONDS = 900
 # Hard ceiling on how long the manual "Custom Attack" evaluate subprocess (a single
 # scorer LLM call, not a full attack) may take.
 PYRIT_EVALUATE_TIMEOUT_SECONDS = 180
+
+
+def pyrit_llm_key_missing() -> str | None:
+    """None if at least one of the primary/fallback LLM keys is set, else an error string."""
+    if os.environ.get(PYRIT_PRIMARY_API_KEY_ENV) or os.environ.get(PYRIT_API_KEY_ENV):
+        return None
+    return (
+        f"PyRIT needs an attacker/scorer LLM: set {PYRIT_PRIMARY_API_KEY_ENV} "
+        f"(OpenAI, primary) or {PYRIT_API_KEY_ENV} (OpenRouter, fallback)."
+    )
 
 # --- Auth (registration / login / email OTP) ------------------------------------
 

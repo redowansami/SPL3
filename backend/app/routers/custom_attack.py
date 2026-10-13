@@ -7,7 +7,6 @@ run_id/job lifecycle like garak/pyrit scans have.
 import asyncio
 import json
 import logging
-import os
 import subprocess
 from datetime import datetime, timezone
 from pathlib import Path
@@ -18,9 +17,9 @@ from fastapi import APIRouter, Depends, HTTPException
 from app.core.config import (
     DEFAULT_REQUEST_TEMPLATE,
     DEFAULT_RESPONSE_FIELD,
-    PYRIT_API_KEY_ENV,
     PYRIT_DEFAULT_REQUEST_TIMEOUT_SECONDS,
     PYRIT_EVALUATE_TIMEOUT_SECONDS,
+    pyrit_llm_key_missing,
 )
 from app.core.security import get_current_user
 from app.db import repository
@@ -74,11 +73,9 @@ async def custom_chat(
 async def evaluate_custom_attack(
     req: CustomEvaluateRequest, current_user: User = Depends(get_current_user)
 ) -> CustomEvaluateResponse:
-    if not os.environ.get(PYRIT_API_KEY_ENV):
-        raise HTTPException(
-            status_code=400,
-            detail=f"Evaluation needs a scorer LLM: set the {PYRIT_API_KEY_ENV} environment variable.",
-        )
+    missing_key_detail = pyrit_llm_key_missing()
+    if missing_key_detail:
+        raise HTTPException(status_code=400, detail=missing_key_detail)
 
     success_criteria = (req.success_criteria or req.objective).strip()
     run_id, run_dir, run_config_path, result_path = prepare_evaluate_run_dir(req, success_criteria)

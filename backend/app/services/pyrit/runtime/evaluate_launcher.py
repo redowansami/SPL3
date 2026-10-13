@@ -37,11 +37,11 @@ async def _run(cfg: dict) -> dict:
     from pyrit.score import SelfAskTrueFalseScorer, TrueFalseQuestion
     from pyrit.setup import IN_MEMORY, initialize_pyrit_async
 
-    from app.services.pyrit.runtime.llm_targets import openai_chat_target
+    from app.services.pyrit.runtime.llm_targets import chat_target_with_fallback
 
     await initialize_pyrit_async(IN_MEMORY)
 
-    scoring_target = openai_chat_target(cfg, cfg["scorer_model"])
+    scoring_target = chat_target_with_fallback(cfg, "scorer")
     objective_scorer = SelfAskTrueFalseScorer.from_question(
         chat_target=scoring_target,
         question=TrueFalseQuestion(true_description=cfg["success_criteria"]),

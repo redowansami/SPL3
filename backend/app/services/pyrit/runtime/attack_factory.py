@@ -5,8 +5,9 @@ Three LLM/target pieces:
   * adversarial target -> OpenAIChatTarget (the attacker; writes each turn)
   * scoring target     -> OpenAIChatTarget (the scorer; judges each reply)
 
-Attacker and scorer share one OpenAI-compatible endpoint (e.g. OpenRouter). The
-API key is read from the environment inside this subprocess, never from the config.
+Attacker and scorer each use OpenAI as primary and OpenRouter as fallback (see
+`llm_targets.chat_target_with_fallback`). API keys are read from the environment
+inside this subprocess, never from the config.
 """
 
 from pyrit.executor.attack import (
@@ -16,7 +17,7 @@ from pyrit.executor.attack import (
 )
 from pyrit.score import SelfAskTrueFalseScorer, TrueFalseQuestion
 
-from app.services.pyrit.runtime.llm_targets import openai_chat_target
+from app.services.pyrit.runtime.llm_targets import chat_target_with_fallback
 from app.services.pyrit.runtime.rest_target import JsonRestTarget
 
 
@@ -30,8 +31,8 @@ def build_attack(cfg: dict) -> tuple[RedTeamingAttack, str]:
         auth_headers=cfg.get("auth_headers"),
     )
 
-    adversarial_target = openai_chat_target(cfg, cfg["attacker_model"])
-    scoring_target = openai_chat_target(cfg, cfg["scorer_model"])
+    adversarial_target = chat_target_with_fallback(cfg, "attacker")
+    scoring_target = chat_target_with_fallback(cfg, "scorer")
 
     objective_scorer = SelfAskTrueFalseScorer.from_question(
         chat_target=scoring_target,

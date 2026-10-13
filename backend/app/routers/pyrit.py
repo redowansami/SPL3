@@ -1,10 +1,8 @@
 """PyRIT multi-turn attack endpoints, parallel to the garak `scan` router."""
 
-import os
-
 from fastapi import APIRouter, Depends, HTTPException, status
 
-from app.core.config import PYRIT_API_KEY_ENV
+from app.core.config import pyrit_llm_key_missing
 from app.constants.pyrit_mitigations import get_objective_mitigation
 from app.constants.pyrit_objectives import PYRIT_OBJECTIVES, PYRIT_OBJECTIVES_BY_ID
 from app.core.security import get_current_user
@@ -49,11 +47,9 @@ def start_pyrit_scan(
         or objective
     )
 
-    if not os.environ.get(PYRIT_API_KEY_ENV):
-        raise HTTPException(
-            status_code=400,
-            detail=f"PyRIT needs an attacker/scorer LLM: set the {PYRIT_API_KEY_ENV} environment variable.",
-        )
+    missing_key_detail = pyrit_llm_key_missing()
+    if missing_key_detail:
+        raise HTTPException(status_code=400, detail=missing_key_detail)
 
     run_id = job_manager.start_pyrit_job(req, req.objective_id, objective, success_criteria, user_id=current_user.id)
     return PyritScanStartResponse(run_id=run_id)
